@@ -197,7 +197,11 @@ export function createPositionSystem(): GameSystem {
           if (position.tier !== LIFE_TIER || position.trials.length === 0) continue
           if (!ctx.rng.chance(TRIAL_CHANCE)) continue
 
-          const trialId = ctx.rng.pick(position.trials)
+          // 上一次丟過的今年不丟；沒得挑就安靜過一年（與事件抽取同一條規則）
+          const candidates = position.trials.filter((id) => id !== position.lastTrial)
+          if (candidates.length === 0) continue
+          const trialId = ctx.rng.pick(candidates)
+          position.lastTrial = trialId
           const [minDrawdown, maxDrawdown] = TRIAL_DRAWDOWN_RANGE
           const drawdown = minDrawdown + ctx.rng.next() * (maxDrawdown - minDrawdown)
 

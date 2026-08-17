@@ -156,6 +156,53 @@ describe('three-tier risk (§7.2)', () => {
     expect(current.events.pending[0]?.eventId).toBe(TRIGGER_ONLY.id)
   })
 
+  it('不會連續兩年抽到同一個事件', () => {
+    // 情境是看得見的（§7.2），所以同一句話連兩年出現會像壞掉。
+    const other: EventDef = { ...COIN_FLIP, id: 'other_event', prompt: '另一件事發生了。' }
+    const ctx = setup({ seed: 'no-repeat', events: [COIN_FLIP, other] })
+
+    let current = ctx.state
+    const drawn: string[] = []
+    for (let turn = 0; turn < 20; turn++) {
+      current = ctx.advance(current, { type: 'advanceTurn' }, ctx.rng).nextState
+      const pending = current.events.pending[0]
+      if (pending) drawn.push(pending.eventId)
+      current = ctx.advance(current, { type: 'resolveEvent', choice: 'normal' }, ctx.rng).nextState
+    }
+
+    expect(drawn.length).toBeGreaterThan(10)
+    for (let i = 1; i < drawn.length; i++) {
+      expect(drawn[i], `第 ${i} 年又抽到 ${drawn[i]}`).not.toBe(drawn[i - 1])
+    }
+    // 兩個都真的有出現過——不是只是卡在其中一個
+    expect(new Set(drawn).size).toBe(2)
+  })
+
+  it('只有一個事件可抽的時候，那一年就安靜過去', () => {
+    const ctx = setup({ seed: 'quiet', events: [COIN_FLIP] })
+    let current = ctx.advance(ctx.state, { type: 'advanceTurn' }, ctx.rng).nextState
+    expect(current.events.pending).toHaveLength(1)
+
+    current = ctx.advance(current, { type: 'resolveEvent', choice: 'normal' }, ctx.rng).nextState
+    current = ctx.advance(current, { type: 'advanceTurn' }, ctx.rng).nextState
+    expect(current.events.pending).toEqual([])
+
+    // 隔一年之後又抽得到（規則只擋「上一次」）
+    current = ctx.advance(current, { type: 'advanceTurn' }, ctx.rng).nextState
+    expect(current.events.pending).toHaveLength(1)
+  })
+
+  it('但被 event.trigger 叫到的事件不受這條規則限制（考驗本來就會再來）', () => {
+    const ctx = setup({ seed: 'trigger-repeat', events: [TRIGGER_ONLY] })
+    let current = ctx.state
+    for (let i = 0; i < 2; i++) {
+      current.events.queue.push(TRIGGER_ONLY.id)
+      current = ctx.advance(current, { type: 'advanceTurn' }, ctx.rng).nextState
+      expect(current.events.pending[0]?.eventId).toBe(TRIGGER_ONLY.id)
+      current = ctx.advance(current, { type: 'resolveEvent', choice: 'normal' }, ctx.rng).nextState
+    }
+  })
+
   it('resolves an unanswered event as the neutral option on the next turn', () => {
     const { advance, state, rng } = setup({ seed: 'ignore' })
     let current = advance(state, { type: 'advanceTurn' }, rng).nextState

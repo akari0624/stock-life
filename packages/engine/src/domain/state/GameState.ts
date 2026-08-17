@@ -64,6 +64,13 @@ export interface EventsState {
   queue: string[]
   /** Decisions currently in front of the player, oldest first. */
   pending: PendingEvent[]
+  /**
+   * The last event the random draw picked. Excluded from the next draw so the
+   * same situation never shows up two years running — with the prompt on
+   * screen (§7.2) an immediate repeat reads like a bug. Triggered events
+   * (`event.trigger`) ignore this: a trial is supposed to come back.
+   */
+  lastDrawn?: string
 }
 
 export type CountersState = Record<string, number>
@@ -132,6 +139,7 @@ export function cloneGameState(state: GameState): GameState {
         ...e,
         choices: e.choices.map((c) => ({ ...c })),
       })),
+      ...(state.events.lastDrawn === undefined ? {} : { lastDrawn: state.events.lastDrawn }),
     },
     moments: [...state.moments],
   }

@@ -74,6 +74,12 @@ export interface Position {
   drawdown: number
   /** A trial waiting for a `resolveTrial` command. */
   pendingTrial?: { id: string; drawdown: number }
+  /**
+   * The trial this position threw last. Excluded from the next roll for the
+   * same reason the event draw excludes `lastDrawn` — with the situation on
+   * screen (§7.2), the same one twice running reads like a bug.
+   */
+  lastTrial?: string
   secret: PositionSecret
 }
 

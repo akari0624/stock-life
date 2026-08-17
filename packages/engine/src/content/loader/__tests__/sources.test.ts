@@ -23,6 +23,7 @@ const anEvent = (id: string) => ({
   id,
   require: { '>=': ['age', 18] },
   weight: 1,
+  prompt: '有件事發生了。',
   choices: [
     { id: 'safe', label: '算了', odds: '+10', mag: 1 },
     { id: 'normal', label: '看看', odds: '0', mag: 2 },
@@ -129,6 +130,19 @@ describe('trust checks (TODO.md #2: 格式合法 ≠ 內容可信)', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const issues = checkTrust({ pack: pack as any, bytes: 9_000_000 })
     expect(issues.map((issue) => issue.rule)).toContain('maxBytes')
+  })
+})
+
+describe('每個事件都要有情境（§7.2）', () => {
+  it('沒有 prompt 的事件載不進來——那正是「不知道自己在選什麼」的來源', async () => {
+    const bare = anEvent('bare_event') as Record<string, unknown>
+    delete bare.prompt
+    const result = await loadContentPack(
+      new PasteSource('no-prompt', JSON.stringify({ manifest: manifest(), events: [bare] })),
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.errors[0]).toMatchObject({ section: 'events', path: [0, 'prompt'] })
   })
 })
 

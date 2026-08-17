@@ -31,8 +31,11 @@ export interface EventDef {
    *
    * Without it a decision is three verbs and three percentages — the outcome
    * text cannot stand in for it, because the outcome is what you read *after*
-   * choosing. Optional only while `core-tw` is being filled in; it becomes
-   * required once it is.
+   * choosing.
+   *
+   * Optional on the **type** (an event object built in a test or by an older
+   * tool may not have one, and the UI falls back to a generic header), but
+   * required by the **schema** — no loaded content can be missing it.
    */
   prompt?: string
   choices: EventChoice[]

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { colorKeys, themes, type Theme } from '@stock-life/tokens/keys'
 import { cn } from './styles/cn.ts'
+import { AudioLab } from './dev/AudioLab.tsx'
 
 /**
  * S12 的示範頁：展示所有 type role、所有 alias 色、以及主題切換。
@@ -90,6 +91,8 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      <AudioLab />
 
       <section className={SECTION}>
         <h2 className="text-title mb-4 text-at-text-primary">Utility 實測</h2>

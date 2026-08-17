@@ -99,33 +99,38 @@
 
 音效**不是「AssetResolver 的音檔版」**，它有三個視覺素材沒有的問題：
 
-- [ ] **`playSound(actionId, opts?)` 是全專案唯一入口**——互動音效（click、
+- [x] **`playSound(actionId, opts?)` 是全專案唯一入口**——互動音效（click、
       option selected、過場）與 director 的演出音效共用它，差別只在有沒有 `when`
-- [ ] **`ui` bus 不受 `rate`/`finish` 影響**（按鈕回饋音不該因快轉或跳過而消失）
-- [ ] **`ActionId` 是從 manifest 產生的型別化 union**，打錯字在編譯期就爆
-      （否則會長出 `ui_clik`，與 §10.5 那些 `H5.mudium` 是同一種腐化）
-- [ ] 兩個 id 來源：互動音效在 app 靜態 manifest（mod 不可覆寫）、
+- [x] **`ui` bus 不受 `rate`/`finish` 影響**（按鈕回饋音不該因快轉或跳過而消失）
+      → 有兩個測試：rate(4) 進行中、以及 finish() 之後按按鈕都仍有音
+- [x] **`ActionId` 是從 manifest 產生的型別化 union**，打錯字在編譯期就爆
+      → `UI_SOUNDS` 是型別來源；內容包的 id 是 branded type，只能經 `contentSfx()` 產生，
+      所以 app 程式碼裡的 `playSound('ui_clik')` 仍然是編譯期錯誤（有 @ts-expect-error 測試）
+- [x] 兩個 id 來源：互動音效在 app 靜態 manifest（mod 不可覆寫）、
       演出音效在內容包 `assets.sfx`（mod 可自帶，未知 id 只警告不拒載）
-- [ ] 三條獨立匯流排 `bgm` / `sfx` / `ui`，各一個 `GainNode`
-      （BGM 與 SFX 混在一起是這類系統最常見的錯誤）
-- [ ] 用 Web Audio API（取樣級精確排程），**不用 `<audio>` 元素**
-- [ ] `AudioResolver`：缺素材就靜音，dev 模式印 would-play，**零音檔即可開發時序**
-- [ ] **Autoplay unlock 流程**：首次手勢 `resume()`；`suspended` 時 UI 有明確提示。
-      這個 bug 開發時看不到（你點過畫面），只有新訪客會中
-- [ ] **Leading-edge debounce**（不是 trailing——trailing 會讓 click 音遲到）。
-      per-id、`dedupeMs` 由 manifest 逐 id 設定。加速時靠它自然稀釋，
-      **不需要**按倍率過濾的規則
-- [ ] ⚠️ **但 debounce 解決不了跳過**：`finish()` 收合的是幾十個**不同** id，
-      per-id 去重對它們無效。跳過取消（`normal` 取消、`high` 存活）
-      與全域併發上限 8 必須獨立實作
-- [ ] BGM 一律正常速度、不變調；`seek()` 往回不重播
-- [ ] `priority` 只用於「併發上限爆掉時先丟 normal」與「跳過時讓 high 存活」，
+      → 內容包若定義 `ui_*` 會被 resolver 丟掉並記在 `blockedOverrides()`
+- [x] 三條獨立匯流排 `bgm` / `sfx` / `ui`，各一個 `GainNode`
+- [x] 用 Web Audio API（取樣級精確排程），**不用 `<audio>` 元素**
+- [x] `AudioResolver`：缺素材就靜音，dev 模式印 would-play，**零音檔即可開發時序**
+- [x] **Autoplay unlock 流程**：首次手勢 `resume()`；`suspended` 時 UI 有明確提示
+      → `unlockAudio()` / `isAudioLocked()` 已實作，`AudioContext` 是延遲建立的，
+      dev 頁會顯示「點一下開啟音效」。⚠️ **真瀏覽器（無痕視窗）的實測還沒做**——
+      本開發環境沒有瀏覽器，S16 把它接到「開始人生」按鈕時要順手驗
+- [x] **Leading-edge debounce**（不是 trailing）。per-id、`dedupeMs` 由 manifest 逐 id 設定
+      → 測試：第一次呼叫立即發聲；同 id 連按 20 次只響 ≤3 次；
+      並實測「同一段演出 1× 全響、4× 被稀釋到 <3 次」
+- [x] ⚠️ **但 debounce 解決不了跳過**：跳過取消（`normal` 取消、`high` 存活）
+      與全域併發上限 8 都獨立實作，且各有測試（20 個**不同** id → 同時發聲被壓在 8）
+- [x] BGM 一律正常速度、不變調；`seek()` 往回不重播
+      → `PlayRequest` 裡**根本沒有速率欄位**，且有測試掃 `presentation/audio/`
+      禁止 `playbackRate` / `detune`
+- [x] `priority` 只用於「併發上限爆掉時先丟 normal」與「跳過時讓 high 存活」，
       **不用於倍率過濾**
-- [ ] ⚠️ **音效的隨機變體不得從 `SeededRng` 取值**——否則同種子會跑出不同人生。
-      `presentation/` 允許 `Math.random()`，所以 §5.3 的 lint 擋不到這裡
-- [ ] manifest 同時支援獨立檔案與 audio sprite（先用獨立檔案）
-- [ ] 缺檔就**什麼都不做**（不報錯、production 不印警告），
-      dev 模式印 would-play 並可匯出清單
+- [x] ⚠️ **音效的隨機變體不得從 `SeededRng` 取值**
+      → 測試掃 `presentation/audio/` 禁止 `SeededRng` / `RngStream` / `rng.stream`
+- [x] manifest 同時支援獨立檔案與 audio sprite（先用獨立檔案）
+- [x] 缺檔就**什麼都不做**（不報錯、production 不印警告），
+      dev 模式印 would-play 並可匯出清單（`engine.wouldPlay()`）
 
 > 💡 **would-play 清單就是音效需求清單。** 不必先憑空想「我需要哪些音效」——
 > 玩過一輪，程式會告訴你有哪些 action id 在等音檔。

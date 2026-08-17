@@ -78,9 +78,19 @@
 
   "ct": {
     "$type": "color",
+    "$description": "只給 presentation/stage/。§10.6 ⑤：不為不存在的元件鋪路，需要時才長。",
     "stage": {
       "actor_shadow": { "$value": "{at.surface.sunken}" },
-      "bg_wash": { "$value": "{at.surface.raised}" }
+      "bg_wash": { "$value": "{at.surface.raised}" },
+      "fallback_from": { "$value": "{gt.neutral.800}" },
+      "fallback_to": { "$value": "{gt.neutral.950}" },
+      "actor_chip": { "$value": "{gt.neutral.700}" },
+      "actor_label": { "$value": "{at.text.primary}" },
+      "say_bg": { "$value": "{at.surface.overlay}" },
+      "say_text": { "$value": "{at.text.primary}" },
+      "badge_bg": { "$value": "{at.surface.overlay}" },
+      "fx_flash": { "$value": "{gt.red.500}" },
+      "fx_glow": { "$value": "{gt.gold.400}" }
     }
   }
 }

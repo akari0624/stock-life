@@ -1,0 +1,196 @@
+/*
+ * presentation/stage/ —— 全專案**唯一**允許手寫原生 CSS 的地方
+ * （DESIGN.md §10.4、§10.3 的「ct 層保持最小」）。
+ *
+ * 為什麼這裡是例外：舞台的視覺值是執行期由 director 算出來的（角色位置、
+ * 崩盤紅光強度、逐字進度），utility class 表達不了動態值。
+ * 所以 TypeScript 只寫 `--c-*` 變數，這個檔案決定那些變數怎麼變成畫面。
+ *
+ * 顏色一律走 ct token（`--ct-stage-*`）；這裡不出現任何色值字面量。
+ */
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.5rem;
+  /* 讓角色色塊的字級能跟著舞台寬度縮放（cqw） */
+  container-type: inline-size;
+  background-color: var(--ct-stage-bg_wash);
+}
+
+/* ── 背景 ───────────────────────────────────────────────────────────────── */
+
+.stage-bg {
+  position: absolute;
+  inset: 0;
+  /* 路徑只能來自內容包 manifest，所以圖是用 --c-bg-image 注入的 */
+  background-image: var(--c-bg-image, none);
+  background-position: center;
+  background-size: cover;
+  opacity: calc(0.35 + 0.65 * var(--c-bg-progress, 1));
+  transition: opacity 120ms linear;
+}
+
+/*
+ * 沒有素材時的 fallback：token 漸層 + 由 id 雜湊算出來的色相偏移。
+ * 於是每個背景 id 都有自己一致的顏色，但顏色來源仍然是 token。
+ */
+.stage-bg--fallback {
+  background-image: linear-gradient(
+    160deg,
+    var(--ct-stage-fallback_from) 0%,
+    var(--ct-stage-fallback_to) 100%
+  );
+  filter: hue-rotate(calc(var(--c-bg-hue, 0) * 1deg)) saturate(1.4);
+}
+
+/* ── 角色 ───────────────────────────────────────────────────────────────── */
+
+.stage-actors {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 6%;
+}
+
+.stage-actor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22%;
+  min-width: 4rem;
+  aspect-ratio: 3 / 4;
+  opacity: var(--c-actor-opacity, 1);
+  /* --c-actor-offset 是 -1…1 的相對量，換算成畫面寬度的一小段位移 */
+  transform: translateX(calc(var(--c-actor-offset, 0) * 2rem));
+  filter: drop-shadow(0 0.75rem 1rem var(--ct-stage-actor_shadow));
+}
+
+.stage-actor--right {
+  order: 2;
+}
+
+.stage-actor-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 角色 fallback：名字色塊 */
+.stage-actor-chip {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background-color: var(--ct-stage-actor_chip);
+  filter: hue-rotate(calc(var(--c-actor-hue, 0) * 1deg)) saturate(1.6);
+  color: var(--ct-stage-actor_label);
+  font-size: clamp(1rem, 4cqw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ── 對話 ───────────────────────────────────────────────────────────────── */
+
+.stage-say {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  left: 4%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  background-color: var(--ct-stage-say_bg);
+  color: var(--ct-stage-say_text);
+}
+
+.stage-say-actor {
+  display: block;
+  opacity: 0.7;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+/*
+ * 逐字顯示：不切字串（切字串會讓換行跳動），而是用 clip 遮住還沒露出的部分。
+ * --c-say-reveal 由 director 算，這裡只決定怎麼呈現。
+ */
+.stage-say-text {
+  display: block;
+  clip-path: inset(0 calc((1 - var(--c-say-reveal, 1)) * 100%) 0 0);
+}
+
+/* ── FX ─────────────────────────────────────────────────────────────────── */
+
+.stage-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stage-fx-layer {
+  position: absolute;
+  inset: 0;
+  opacity: calc(1 - var(--c-fx-progress, 0));
+}
+
+/* FX 永遠沒有檔案，只有 CSS 動畫（TODO.md #5a）。 */
+.stage-fx--flash {
+  background-color: var(--ct-stage-fx_flash);
+  mix-blend-mode: screen;
+  opacity: calc(0.6 * (1 - var(--c-fx-progress, 0)));
+}
+
+.stage-fx--shake {
+  box-shadow: inset 0 0 4rem var(--ct-stage-fx_flash);
+  transform: translateX(calc(sin(var(--c-fx-progress, 0) * 24rad) * 0.4rem));
+}
+
+.stage-fx--pulse {
+  box-shadow: inset 0 0 6rem var(--ct-stage-fx_glow);
+  opacity: calc(0.8 * sin(var(--c-fx-progress, 0) * 3.14159rad));
+}
+
+.stage-fx--sparkle {
+  background-image: radial-gradient(
+    circle at 50% 40%,
+    var(--ct-stage-fx_glow) 0%,
+    transparent 60%
+  );
+  opacity: calc(0.9 * sin(var(--c-fx-progress, 0) * 3.14159rad));
+  transform: scale(calc(0.6 + 0.6 * var(--c-fx-progress, 0)));
+}
+
+/* ── Badge（拿到人格、開倉…） ───────────────────────────────────────────── */
+
+.stage-badges {
+  position: absolute;
+  top: 4%;
+  left: 4%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.stage-badge {
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  background-color: var(--ct-stage-badge_bg);
+  color: var(--ct-stage-say_text);
+  font-size: 0.8rem;
+  opacity: calc(sin(var(--c-badge-progress, 0) * 3.14159rad) + 0.15);
+  transform: translateY(calc((1 - var(--c-badge-progress, 0)) * -0.5rem));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-actor,
+  .stage-fx-layer,
+  .stage-badge {
+    transform: none;
+  }
+}

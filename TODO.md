@@ -68,11 +68,19 @@
 
 **現在必須先做到的邊界**：
 
-- [ ] `Calendar` 服務把回合與時間解耦（`granularity: 'year' | 'quarter'`）
-- [ ] **所有內容條件寫 `age` / `year` / `stage`，永不寫 `turnIndex`**
-- [ ] 存檔格式帶 `schemaVersion` 與 migration 掛勾
-- [ ] 存檔存的是 `seed + contentFingerprint + commandLog`，不是狀態快照
+- [x] `Calendar` 服務把回合與時間解耦（`granularity: 'year' | 'quarter'`）
+      → S3 交付。`turnsPerYear` 由 granularity 決定，`age`/`year`/`stage` 都由它換算
+- [x] **所有內容條件寫 `age` / `year` / `stage`，永不寫 `turnIndex`**
+      → 做成**結構上不可能**：`turnIndex` 根本不在 facade 白名單裡，所以條件樹
+      寫不出來（`FacadeField.test.ts` 有一條測試擋著任何含 turn 的路徑）
+- [x] 存檔格式帶 `schemaVersion` 與 migration 掛勾
+      → S17 交付。`sim/save.ts` 的 `SAVE_SCHEMA_VERSION` + `SAVE_MIGRATIONS`
+      （`fromVersion → migration`，`migrateSave()` 一版一版往前推；v1 當然是空的，
+      掛勾存在的意義是「出 v2 時只加一筆，舊存檔照樣讀」，已有測試驅動假的 v1→v3）
+- [x] 存檔存的是 `seed + contentFingerprint + commandLog`，不是狀態快照
       （這樣格式演進時舊存檔仍可重播）
+      → S17 交付。有測試掃存檔字串，確認 `capitalState`／`counters`／`positions`
+      這些內部欄位名一個都不在裡面；`restoreLife()` 重播回同一份 summary
 
 ---
 

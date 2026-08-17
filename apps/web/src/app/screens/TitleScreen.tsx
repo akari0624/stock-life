@@ -2,12 +2,13 @@ import { themes } from '@stock-life/tokens/keys'
 import { START_YEARS } from '../AppStore.ts'
 import { useApp, useStore } from '../hooks.ts'
 import { AudioControls } from '../components/AudioControls.tsx'
+import { SavedGame } from '../components/SavedGame.tsx'
 import { BUTTON, BUTTON_ACTIVE, CARD, INPUT, LABEL, PRIMARY } from '../ui.ts'
 import { cn } from '../../styles/cn.ts'
 
 export function TitleScreen() {
   const store = useStore()
-  const { settings, starting, error } = useApp()
+  const { settings, starting, error, saved, saveIssue } = useApp()
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-6 py-12">
@@ -17,6 +18,14 @@ export function TitleScreen() {
           你會遇到幾次真正的機會。問題從來不是有沒有遇到，而是遇到的時候你敢押多少。
         </p>
       </header>
+
+      {saved && <SavedGame save={saved} disabled={starting} />}
+
+      {saveIssue && (
+        <p className="text-caption rounded border border-at-border-strong p-3 text-at-text-muted" role="status">
+          {saveIssue}
+        </p>
+      )}
 
       <section className={cn(CARD, 'flex flex-col gap-4 p-6')}>
         <div>

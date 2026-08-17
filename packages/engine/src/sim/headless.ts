@@ -84,7 +84,7 @@ export type RunLifeOutcome = { ok: true; result: RunLifeResult } | { ok: false; 
  * The settlement summary. Exported because the app's settlement screen (S16)
  * must show the same numbers the balance runner reports — one definition.
  */
-export function summariseLife(life: Life, seed: string): LifeSummary {
+export function summariseLife(life: Life, seed: string = String(life.seed)): LifeSummary {
   const state = life.sim.getSnapshot().state
   const counter = (key: string): number => state.counters[key] ?? 0
   const netWorth = state.capitalState.capital - state.capitalState.debt

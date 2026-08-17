@@ -121,6 +121,7 @@ packages/engine/            ← 零 react。dependencies 只有 zod。node 可�
       schema/               zod schema（單一真相）→ 可匯出 JSON Schema
       loader/               解析、驗證、合併、指紋計算
       packs/core-tw/        官方內容包（走跟 mod 完全一樣的載入器）
+        events/             事件依主題分檔，events.ts 匯總
     sim/                    引擎外殼：turn 排程、系統註冊表、無頭執行器
 
 apps/web/                   ← React + Tailwind
@@ -130,10 +131,21 @@ apps/web/                   ← React + Tailwind
       stage/                場景渲染（現在 CSS/文字，日後貼圖）
       assets/               AssetResolver（id → 素材，缺就 fallback）
       audio/                AudioBus + AudioResolver（無音檔亦可運作，見 §10.7）
-    ui/                     React 元件，只讀 view model
     styles/                 globals.css 匯入 token（見 §10.3）+ cn()
     app/                    組裝、存檔、畫面狀態機
+      AppStore.ts           畫面狀態機 + useSyncExternalStore 的 store
+      GameSession.ts        包住 sim，把 command 與演出時間軸接起來
+      screens/              一個畫面一支：Title / Game / Settlement / Packs
+      components/           ui 層：React 元件，只讀 view model
+      save/                 SaveStorage（localStorage）+ 種子分享 URL
+      packs/                內容包匯入匯出（PackLibrary / download）
+    dev/                    `screen === 'dev'` 的手動驗證頁，非遊戲流程：
+                            DevScreen / TokenGallery / AudioLab
 ```
+
+**`ui` 層沒有獨立目錄**，它實體落在 `app/components/`：這些元件對 engine 只有
+`import type`（`PlayerView` 等 view model），不碰 sim、不含規則。層級紀律由 import
+方向維持，不是由目錄位置維持——目錄少一層，換來畫面與它專屬元件放在一起。
 
 ### 3.1 為什麼 domain 必須零依賴
 

@@ -86,7 +86,9 @@
 - [ ] `AssetResolver` 存在，所有視覺資源**只透過 id 引用**，不得硬編碼路徑
 - [ ] 每種型別都有 fallback：角色→名字色塊、背景→漸層、FX→CSS 動畫
 - [ ] `SceneHint` 與 `StateEffect` 已分離（`DESIGN.md` §6.3）；補素材不需動 `domain/`
-- [ ] director 支援 skip / 速度倍率，且**演出長度不影響模擬結果**
+- [x] director 支援 skip / 速度倍率，且**演出長度不影響模擬結果**
+      → S13 交付。`play/pause/rate/seek/finish`，並用真的跑完一局
+      （跳過 vs 播完 vs 完全不演）比對最終 state 相同
 
 ### 5b · 音效邊界（S15 交付，依據 `DESIGN.md` §10.7）
 

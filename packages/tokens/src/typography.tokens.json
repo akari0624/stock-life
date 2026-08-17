@@ -1,0 +1,91 @@
+{
+  "gt": {
+    "font": {
+      "family": {
+        "$type": "fontFamily",
+        "sans": {
+          "$value": "system-ui, -apple-system, \"Segoe UI\", \"Noto Sans TC\", \"PingFang TC\", \"Microsoft JhengHei\", \"Hiragino Sans\", sans-serif",
+          "$description": "系統字體 stack（0 KB）。§10.5 的 webfont/subset 與 UGC 天生矛盾，故第一版不用 webfont。"
+        },
+        "mono": {
+          "$value": "ui-monospace, SFMono-Regular, Menlo, Consolas, \"Noto Sans Mono\", monospace"
+        }
+      },
+      "size": {
+        "$type": "dimension",
+        "$description": "模組化比例 1.25，基準 1rem。",
+        "100": { "$value": "0.8rem" },
+        "200": { "$value": "1rem" },
+        "300": { "$value": "1.25rem" },
+        "400": { "$value": "1.5625rem" },
+        "500": { "$value": "1.953rem" }
+      },
+      "line": {
+        "$type": "number",
+        "$description": "繁中沒有 x-height，正文需 1.7–1.8（§10.5）。",
+        "tight": { "$value": 1.25 },
+        "snug": { "$value": 1.45 },
+        "normal": { "$value": 1.75 },
+        "loose": { "$value": 1.9 }
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$description": "繁中字體只有兩級，視覺層級不靠字重（§10.5）。",
+        "regular": { "$value": 400 },
+        "bold": { "$value": 700 }
+      },
+      "tracking": {
+        "$type": "dimension",
+        "tight": { "$value": "-0.01em" },
+        "none": { "$value": "0em" },
+        "wide": { "$value": "0.04em" }
+      }
+    }
+  },
+
+  "at": {
+    "font": {
+      "$type": "fontFamily",
+      "sans": { "$value": "{gt.font.family.sans}" },
+      "mono": { "$value": "{gt.font.family.mono}" }
+    },
+    "type": {
+      "$description": "semantic type roles：每個 role 綁 size + line_height + weight（§10.5）。",
+      "display": {
+        "size": { "$type": "dimension", "$value": "{gt.font.size.500}" },
+        "line_height": { "$type": "number", "$value": "{gt.font.line.tight}" },
+        "weight": { "$type": "fontWeight", "$value": "{gt.font.weight.bold}" },
+        "tracking": { "$type": "dimension", "$value": "{gt.font.tracking.tight}" }
+      },
+      "title": {
+        "size": { "$type": "dimension", "$value": "{gt.font.size.300}" },
+        "line_height": { "$type": "number", "$value": "{gt.font.line.snug}" },
+        "weight": { "$type": "fontWeight", "$value": "{gt.font.weight.bold}" },
+        "tracking": { "$type": "dimension", "$value": "{gt.font.tracking.none}" }
+      },
+      "body": {
+        "size": { "$type": "dimension", "$value": "{gt.font.size.200}" },
+        "line_height": { "$type": "number", "$value": "{gt.font.line.normal}" },
+        "weight": { "$type": "fontWeight", "$value": "{gt.font.weight.regular}" },
+        "tracking": { "$type": "dimension", "$value": "{gt.font.tracking.none}" }
+      },
+      "caption": {
+        "size": { "$type": "dimension", "$value": "{gt.font.size.100}" },
+        "line_height": { "$type": "number", "$value": "{gt.font.line.snug}" },
+        "weight": { "$type": "fontWeight", "$value": "{gt.font.weight.regular}" },
+        "tracking": { "$type": "dimension", "$value": "{gt.font.tracking.wide}" }
+      },
+      "numeric": {
+        "size": { "$type": "dimension", "$value": "{gt.font.size.200}" },
+        "line_height": { "$type": "number", "$value": "{gt.font.line.snug}" },
+        "weight": { "$type": "fontWeight", "$value": "{gt.font.weight.regular}" },
+        "tracking": { "$type": "dimension", "$value": "{gt.font.tracking.none}" },
+        "variant_numeric": {
+          "$type": "other",
+          "$value": "tabular-nums",
+          "$description": "資產數字跳動時非等寬會左右抖動（§10.5）。"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "at": {
+    "$type": "color",
+    "$description": "主題只覆寫 alias 層，且每個值都必須是 {gt.*} 參照——build 會驗證（§10.3）。",
+    "surface": {
+      "base": { "$value": "{gt.green.950}" },
+      "raised": { "$value": "{gt.green.900}" },
+      "overlay": { "$value": "{gt.neutral.900}" },
+      "sunken": { "$value": "{gt.black}" }
+    },
+    "border": {
+      "subtle": { "$value": "{gt.green.700}" },
+      "strong": { "$value": "{gt.green.500}" }
+    },
+    "text": {
+      "primary": { "$value": "{gt.green.300}" },
+      "secondary": { "$value": "{gt.green.400}" },
+      "muted": { "$value": "{gt.green.600}" },
+      "inverse": { "$value": "{gt.green.950}" }
+    },
+    "accent": {
+      "default": { "$value": "{gt.gold.300}" },
+      "hover": { "$value": "{gt.white}" },
+      "subtle": { "$value": "{gt.gold.600}" }
+    },
+    "gain": { "$value": "{gt.green.300}" },
+    "loss": { "$value": "{gt.red.300}" },
+    "warn": { "$value": "{gt.gold.400}" },
+    "info": { "$value": "{gt.blue.300}" },
+    "focus": { "$value": "{gt.gold.300}" }
+  }
+}

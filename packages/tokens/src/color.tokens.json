@@ -1,0 +1,86 @@
+{
+  "gt": {
+    "$type": "color",
+    "neutral": {
+      "50": { "$value": "#f7f8f8" },
+      "100": { "$value": "#eceef0" },
+      "200": { "$value": "#d5d9dd" },
+      "300": { "$value": "#b0b7bf" },
+      "400": { "$value": "#7f8994" },
+      "500": { "$value": "#5d6875" },
+      "600": { "$value": "#45505c" },
+      "700": { "$value": "#333c46" },
+      "800": { "$value": "#232a32" },
+      "900": { "$value": "#171c22" },
+      "950": { "$value": "#0e1216" }
+    },
+    "green": {
+      "300": { "$value": "#6ee7a8" },
+      "400": { "$value": "#34d399" },
+      "500": { "$value": "#12b981" },
+      "600": { "$value": "#059669" },
+      "700": { "$value": "#047857" },
+      "900": { "$value": "#052e22" },
+      "950": { "$value": "#03211a" }
+    },
+    "red": {
+      "300": { "$value": "#fca5a5" },
+      "400": { "$value": "#f87171" },
+      "500": { "$value": "#ef4444" },
+      "600": { "$value": "#dc2626" },
+      "700": { "$value": "#b91c1c" },
+      "900": { "$value": "#5b1616" }
+    },
+    "gold": {
+      "300": { "$value": "#fcd34d" },
+      "400": { "$value": "#fbbf24" },
+      "500": { "$value": "#f59e0b" },
+      "600": { "$value": "#d97706" }
+    },
+    "blue": {
+      "300": { "$value": "#93c5fd" },
+      "400": { "$value": "#60a5fa" },
+      "500": { "$value": "#3b82f6" }
+    },
+    "white": { "$value": "#ffffff" },
+    "black": { "$value": "#000000" }
+  },
+
+  "at": {
+    "$type": "color",
+    "surface": {
+      "base": { "$value": "{gt.neutral.950}" },
+      "raised": { "$value": "{gt.neutral.900}" },
+      "overlay": { "$value": "{gt.neutral.800}" },
+      "sunken": { "$value": "{gt.black}" }
+    },
+    "border": {
+      "subtle": { "$value": "{gt.neutral.800}" },
+      "strong": { "$value": "{gt.neutral.600}" }
+    },
+    "text": {
+      "primary": { "$value": "{gt.neutral.100}" },
+      "secondary": { "$value": "{gt.neutral.300}" },
+      "muted": { "$value": "{gt.neutral.400}" },
+      "inverse": { "$value": "{gt.neutral.950}" }
+    },
+    "accent": {
+      "default": { "$value": "{gt.gold.400}" },
+      "hover": { "$value": "{gt.gold.300}" },
+      "subtle": { "$value": "{gt.gold.600}" }
+    },
+    "gain": { "$value": "{gt.green.400}" },
+    "loss": { "$value": "{gt.red.400}" },
+    "warn": { "$value": "{gt.gold.500}" },
+    "info": { "$value": "{gt.blue.400}" },
+    "focus": { "$value": "{gt.blue.400}" }
+  },
+
+  "ct": {
+    "$type": "color",
+    "stage": {
+      "actor_shadow": { "$value": "{at.surface.sunken}" },
+      "bg_wash": { "$value": "{at.surface.raised}" }
+    }
+  }
+}

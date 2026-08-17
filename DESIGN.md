@@ -437,6 +437,7 @@ domain 一行都不用改。
   "id": "overtime_crunch",
   "require": { "==": ["career.industry", "tech"] },
   "weight": 10,
+  "prompt": "晚上九點，主管還在。他剛剛經過你桌邊兩次，但什麼都沒說。",
   "choices": [
     { "id": "safe",   "label": "準時下班",  "odds": "+20", "mag": 1 },
     { "id": "normal", "label": "配合加班",  "odds": "0",   "mag": 2 },
@@ -447,6 +448,19 @@ domain 一行都不用改。
   "scene": { "bg": "office", "sfx": "keyboard" }
 }
 ```
+
+**一個事件演兩次，中間夾著玩家的選擇：**
+
+| 時機 | 發出什麼 | 玩家看到 |
+|---|---|---|
+| **提出**（抽到／被 `event.trigger` 叫到） | `scene.bg`、`scene.actor`、`scene.say(prompt)` | 情境。**這是他做決定的唯一依據** |
+| **結算**（`resolveEvent` 之後） | `scene.say(good.text \| bad.text)`、`scene.sfx`、`scene.fx` | 結果 |
+
+⚠️ `prompt` 不是可有可無的裝飾：沒有它，玩家看到的就只有三個動詞加三個百分比，
+不知道自己在決定什麼。**結局文字取代不了它**——結局是選完之後才看得到的東西。
+
+（第一版 `prompt` 在 schema 上是選填，只為了讓既有內容包能逐步補齊；
+`core-tw` 補完後就收成必填。）
 
 ### 7.3 Career —— 一張有向圖
 

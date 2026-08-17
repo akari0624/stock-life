@@ -16,6 +16,7 @@ const COIN_FLIP: EventDef = {
   id: 'overtime_crunch',
   require: { '>=': ['age', 0] },
   weight: 10,
+  prompt: '晚上九點，主管還在。',
   choices: [
     { id: 'safe', label: '準時下班', odds: '+20', mag: 1 },
     { id: 'normal', label: '配合加班', odds: '0', mag: 2 },
@@ -163,12 +164,45 @@ describe('three-tier risk (§7.2)', () => {
     expect(current.counters[counterForEventChoice('normal')]).toBe(1)
   })
 
-  it('emits the outcome text and scene as hints, never as state', () => {
+  it('tells the player the situation *before* they choose (§7.2)', () => {
+    // The whole point: a decision is three verbs and three percentages until
+    // the situation is on screen. So presenting an event has to emit the
+    // scene and the prompt — not just queue a pending decision.
+    const ctx = setup({ seed: 'prompt' })
+    const { nextState, effects } = ctx.advance(ctx.state, { type: 'advanceTurn' }, ctx.rng)
+
+    expect(nextState.events.pending[0]?.prompt).toBe(COIN_FLIP.prompt)
+    expect(effects).toContainEqual({ type: 'scene.bg', id: 'office' })
+    expect(effects).toContainEqual({ type: 'scene.say', actor: 'narrator', text: COIN_FLIP.prompt })
+    // …and the outcome text is *not* spoiled before the choice is made
+    expect(effects.some((e) => e.type === 'scene.say' && e.text === COIN_FLIP.good.text)).toBe(false)
+    expect(effects.some((e) => e.type === 'scene.say' && e.text === COIN_FLIP.bad.text)).toBe(false)
+  })
+
+  it('an event with no prompt still works — the panel falls back to a generic header', () => {
+    const bare: EventDef = { ...COIN_FLIP, id: 'bare_event' }
+    delete bare.prompt
+    const ctx = setup({ seed: 'bare', events: [bare] })
+    const { nextState, effects } = ctx.advance(ctx.state, { type: 'advanceTurn' }, ctx.rng)
+
+    expect(nextState.events.pending[0]?.prompt).toBeUndefined()
+    expect(effects.some((e) => e.type === 'scene.say')).toBe(false)
+  })
+
+  it('emits the outcome text as a hint, never as state', () => {
     const { advance, state, rng } = setup({ seed: 'scene' })
     const current = advance(state, { type: 'advanceTurn' }, rng).nextState
-    const { effects } = advance(current, { type: 'resolveEvent', choice: 'safe' }, rng)
-    expect(effects).toContainEqual({ type: 'scene.bg', id: 'office' })
-    expect(effects.some((e) => e.type === 'scene.say')).toBe(true)
+    const { nextState, effects } = advance(current, { type: 'resolveEvent', choice: 'safe' }, rng)
+
+    // 結算只說結果——舞台在「提出」那一刻就已經佈好了，director 會把它留著
+    const said = effects.filter((e) => e.type === 'scene.say')
+    expect(said).toHaveLength(1)
+    expect([COIN_FLIP.good.text, COIN_FLIP.bad.text]).toContain(
+      said[0] && 'text' in said[0] ? said[0].text : '',
+    )
+    expect(effects.some((e) => e.type === 'scene.bg')).toBe(false)
+    // SceneHint 對 state 零影響（§6.3）
+    expect(nextState.events.pending).toEqual([])
   })
 })
 

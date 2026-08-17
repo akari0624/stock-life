@@ -8,6 +8,7 @@ export const workEvents = [
     id: 'overtime_crunch',
     require: { '==': ['career.industry', 'tech'] },
     weight: 10,
+    prompt: '晚上九點，主管還在。他剛剛經過你桌邊兩次，什麼都沒說。',
     choices: [
       { id: 'safe', label: '準時下班', odds: '+20', mag: 1 },
       { id: 'normal', label: '配合加班', odds: '0', mag: 2 },

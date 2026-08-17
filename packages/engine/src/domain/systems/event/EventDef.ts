@@ -26,6 +26,15 @@ export interface EventDef {
   require: Expr
   /** 0 means "never drawn at random" — only reachable via `event.trigger`. */
   weight: number
+  /**
+   * The situation, shown **before** the player chooses (§7.2).
+   *
+   * Without it a decision is three verbs and three percentages — the outcome
+   * text cannot stand in for it, because the outcome is what you read *after*
+   * choosing. Optional only while `core-tw` is being filled in; it becomes
+   * required once it is.
+   */
+  prompt?: string
   choices: EventChoice[]
   good: EventOutcome
   bad: EventOutcome

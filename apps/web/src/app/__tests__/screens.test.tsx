@@ -11,6 +11,7 @@ import { TitleScreen } from '../screens/TitleScreen.tsx'
 import { GameScreen } from '../screens/GameScreen.tsx'
 import { SettlementScreen } from '../screens/SettlementScreen.tsx'
 import { PacksScreen } from '../screens/PacksScreen.tsx'
+import { Decisions } from '../components/Decisions.tsx'
 import { AudioEngine } from '../../presentation/audio/AudioEngine.ts'
 import { setAudioEngine } from '../../presentation/audio/playSound.ts'
 import { FakeOutput } from '../../presentation/audio/__tests__/fakeOutput.ts'
@@ -61,6 +62,35 @@ describe('畫面', () => {
     // 開場的佈景（沒有素材時是 token 漸層的 fallback）
     expect(markup).toContain('stage-bg')
     expect(markup).toContain('data-bg="life_start"')
+    session.dispose()
+  })
+
+  it('事件決策卡上看得到情境，不是三個動詞加三個百分比（§7.2）', async () => {
+    const { store, session } = await startedStore()
+    const decision: Decision = {
+      kind: 'event',
+      eventId: 'overtime_crunch',
+      prompt: '晚上九點，主管還在。他剛剛經過你桌邊兩次，什麼都沒說。',
+      choices: [
+        { id: 'safe', label: '準時下班', chance: 70, mag: 1 },
+        { id: 'normal', label: '配合加班', chance: 50, mag: 2 },
+        { id: 'bold', label: '拼命表現', chance: 35, mag: 3 },
+      ],
+    }
+
+    const markup = render(
+      store,
+      <Decisions
+        session={session}
+        view={session.getSnapshot().view}
+        decision={decision}
+        finished={false}
+        onSettle={() => {}}
+      />,
+    )
+
+    expect(markup).toContain('晚上九點，主管還在')
+    expect(markup).toContain('準時下班')
     session.dispose()
   })
 

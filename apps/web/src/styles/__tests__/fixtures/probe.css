@@ -1,0 +1,8 @@
+/*
+ * 給 tailwind.test.ts 用的探針。source(none) 關掉自動掃描，
+ * 只從 candidates.txt 取候選 class，輸出因此小而穩定。
+ */
+@import 'tailwindcss' source(none);
+@import '@stock-life/tokens/tokens.css';
+@import '@stock-life/tokens/theme.css';
+@source './candidates.txt';

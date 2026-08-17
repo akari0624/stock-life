@@ -2,4 +2,6 @@ packages:
   - 'packages/*'
   - 'apps/*'
 allowBuilds:
+  # 只有 tailwind CLI 的 --watch 需要它，我們不用 watch → 不必編原生模組
+  '@parcel/watcher': false
   esbuild: true

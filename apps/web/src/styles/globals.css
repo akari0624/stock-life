@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+@import '@stock-life/tokens/tokens.css';
+@import '@stock-life/tokens/theme.css';
+
+/*
+ * 這裡只做「把 body 接上 token」這一件事。
+ * 其餘樣式一律走 utility；唯一允許手寫原生 CSS 的地方是
+ * presentation/stage/（DESIGN.md §10.4，S14 才會長出來）。
+ */
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--at-surface-base);
+    color: var(--at-text-primary);
+    font-family: var(--at-font-sans);
+    font-size: var(--at-type-body-size);
+    line-height: var(--at-type-body-line_height);
+  }
+}

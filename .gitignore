@@ -24,3 +24,4 @@ schema-export
 *.njsproj
 *.sln
 *.sw?
+packages/tokens/dist/

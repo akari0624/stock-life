@@ -177,21 +177,27 @@
 
 **S12 必須守住的紀律**（完整判準在 `PLAN.md` S12）：
 
-- [ ] `@theme` 只收 `at` + `ct`；`gt` 留在 `:root` 但**不生成 utility**。
+- [x] `@theme` 只收 `at` + `ct`；`gt` 留在 `:root` 但**不生成 utility**。
       這條一旦破了，三層架構就只是註解而非強制
-- [ ] 主題切換只覆寫 `--at-*`；任何主題都不得修改 `--gt-*`
-- [ ] typography 走同一條 token pipeline，**不手寫在樣式檔裡**（§10.5 的腐化證據）
-- [ ] `numeric` role 含 `font-variant-numeric: tabular-nums`
-- [ ] `cn()` 的 tailwind-merge 擴充有測試證明去重生效（漏掉會靜默壞掉）
-- [ ] 生成流程是一次 build 兩個 custom format 消費同一份 AST，
-      **不是** CSS 字串後處理（§10.6 ④）
+      → `apps/web/src/styles/__tests__/tailwind.test.ts` 用真的編譯出來的 CSS 驗證
+      `bg-gt-green-500` 不存在
+- [x] 主題切換只覆寫 `--at-*`；任何主題都不得修改 `--gt-*`
+      → 主題檔的值**只准是 `{gt.*}` 參照**，由 build 驗證（違反就 build 失敗）
+- [x] typography 走同一條 token pipeline，**不手寫在樣式檔裡**（§10.5 的腐化證據）
+- [x] `numeric` role 含 `font-variant-numeric: tabular-nums`
+- [x] `cn()` 的 tailwind-merge 擴充有測試證明去重生效（漏掉會靜默壞掉）
+- [x] 生成流程是一次 build 兩個 custom format 消費同一份 AST，
+      **不是** CSS 字串後處理（§10.6 ④）→ 實際是三個 format（多一個 `keys.ts`）
 
-**S12 動工前得拍板的兩件事**：
+**S12 動工前得拍板的兩件事** ▸ 已拍板：
 
-- [ ] **字體**：系統字體 stack（0 KB）／webfont + subset／動態 subset。
-      注意與 UGC 的衝突——內容包會帶進事前未知的字，subset 策略天生矛盾。
-      建議傾向系統字體 stack，把 webfont 留給標題等少量固定文字
-- [ ] **尺寸階梯**：模組化比例（1.2／1.25）還是手挑各階
+- [x] **字體**：採**系統字體 stack**（0 KB）。理由就是本項原本的警告——
+      UGC 內容包會帶進事前未知的字，subset 策略與 UGC 天生矛盾，而動態 subset
+      需要後端。標題用 webfont 的選項留著（只需改 `gt.font.family.*` 一個 token），
+      但第一版不做。
+- [x] **尺寸階梯**：**模組化比例 1.25**，基準 1rem，五階
+      （0.8 / 1 / 1.25 / 1.5625 / 1.953rem）。手挑各階在沒有設計師的專案裡
+      會長成 §10.5 那種腐化，比例函數則不會。
 
 **已決定，記錄理由**：
 

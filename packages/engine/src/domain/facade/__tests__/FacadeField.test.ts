@@ -18,6 +18,15 @@ describe('listFacadeFields', () => {
     }
   })
 
+  it('offers age/year/stage but never turnIndex (TODO.md #4: content must not depend on turn granularity)', () => {
+    const paths = listFacadeFields().map((field) => field.path)
+    expect(paths).toEqual(expect.arrayContaining(['age', 'year', 'stage']))
+    // A condition written against turnIndex would silently change meaning the
+    // day the calendar switches to quarters. The whitelist makes that
+    // impossible to write in the first place.
+    expect(paths.filter((path) => /turn/i.test(path))).toEqual([])
+  })
+
   it('returns a fresh array each call (callers cannot mutate the source list)', () => {
     const a = listFacadeFields()
     const b = listFacadeFields()

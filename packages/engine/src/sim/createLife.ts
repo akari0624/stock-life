@@ -40,13 +40,31 @@ export interface LifeOptions {
   startNodeId?: string
 }
 
+/**
+ * `LifeOptions` with every default filled in and the (unserialisable) content
+ * sources dropped. This is exactly what a save file has to record alongside
+ * `seed + fingerprint + commandLog` to reconstruct the same life (§5.1).
+ */
+export interface ResolvedLifeOptions {
+  name: string
+  startAge: number
+  endAge: number
+  startYear: number
+  granularity: Granularity
+  worldGeneratorId: string
+  startNodeId: string
+}
+
 export interface Life {
   sim: Sim
   calendar: Calendar
   timeline: Timeline
   content: MergedContent
   /** Half of the share code (§5.1) — the other half is the seed. */
+  seed: string | number
   fingerprint: number
+  /** Everything except the seed that a replay needs in order to line up. */
+  options: ResolvedLifeOptions
   /** Turns in a full life, from startAge to endAge inclusive. */
   totalTurns: number
 }
@@ -78,12 +96,14 @@ export async function createLife(options: LifeOptions): Promise<CreateLifeResult
   const endAge = options.endAge ?? DEFAULT_END_AGE
   const startYear = options.startYear ?? DEFAULT_START_YEAR
   const granularity = options.granularity ?? 'year'
+  const name = options.name ?? 'Player'
+  const worldGeneratorId = options.worldGeneratorId ?? 'random'
   const calendar = new Calendar({ granularity, startYear, startAge })
   const totalTurns = (endAge - startAge) * calendar.turnsPerYear
 
   const rng = new SeededRng(options.seed)
   const generators = options.worldGenerators ?? createDefaultWorldGeneratorRegistry()
-  const generator = generators.get(options.worldGeneratorId ?? 'random')
+  const generator = generators.get(worldGeneratorId)
   const timeline = generator.generate(rng.stream(WORLD_RNG_STREAM), {
     startYear,
     endYear: startYear + (endAge - startAge),
@@ -113,7 +133,7 @@ export async function createLife(options: LifeOptions): Promise<CreateLifeResult
   registry.register(createTraitSystem({ traits: content.traits, opportunities, position: positionDeps }))
 
   const initialState = createInitialGameState({
-    name: options.name ?? 'Player',
+    name,
     calendar,
     era: eraStateFor(timeline, startYear),
     capital: { ...DEFAULT_STARTING_CAPITAL },
@@ -121,5 +141,17 @@ export async function createLife(options: LifeOptions): Promise<CreateLifeResult
 
   const sim = new Sim({ seed: options.seed, initialState, registry, calendar })
 
-  return { ok: true, life: { sim, calendar, timeline, content, fingerprint, totalTurns } }
+  return {
+    ok: true,
+    life: {
+      sim,
+      calendar,
+      timeline,
+      content,
+      seed: options.seed,
+      fingerprint,
+      options: { name, startAge, endAge, startYear, granularity, worldGeneratorId, startNodeId },
+      totalTurns,
+    },
+  }
 }

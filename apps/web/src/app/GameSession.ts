@@ -12,6 +12,7 @@ import {
 } from '@stock-life/engine'
 import { Director } from '../presentation/director/Director.ts'
 import { compile } from '../presentation/director/compile.ts'
+import { EMPTY_PLAN } from '../presentation/director/Scene.ts'
 import { AssetResolver } from '../presentation/assets/AssetResolver.ts'
 import { mergeAssetManifests } from '../presentation/assets/AssetManifest.ts'
 import { bindDirectorAudio } from '../presentation/audio/directorAudio.ts'
@@ -35,8 +36,23 @@ export interface LogEntry {
   tone?: 'gain' | 'loss' | 'neutral'
 }
 
+/**
+ * `play` 是正常玩；`replay` 是把一份 commandLog 一步一步演出來（S17）。
+ * 兩者共用同一條 `sim.dispatch()` 路徑——重播不是另一套模擬，只是不讓玩家選。
+ */
+export type SessionMode = 'play' | 'replay'
+
+export interface ReplayState {
+  /** 已經演到第幾個 command */
+  index: number
+  total: number
+  playing: boolean
+  done: boolean
+}
+
 export interface SessionSnapshot {
   version: number
+  mode: SessionMode
   view: PlayerView
   decision: Decision | undefined
   entries: readonly LogEntry[]
@@ -45,13 +61,26 @@ export interface SessionSnapshot {
   shareCode: string
   turn: number
   totalTurns: number
+  replay: ReplayState | undefined
 }
 
 export interface GameSessionOptions {
   life: Life
   seed: number
   audio?: AudioEngine
+  /**
+   * 續玩：把存檔的 commandLog 快轉套用（不演出），文字流順便長回來。
+   * 演出與否對模擬零影響（S13 判準），所以快轉是安全的。
+   */
+  restore?: readonly Command[]
+  /** 重播：同一份 log，改成一步一步交給 director 演。 */
+  replay?: readonly Command[]
+  /** 重播時每一步之間的節拍；測試注入同步版本。 */
+  schedule?: (callback: () => void) => void
 }
+
+/** 重播時兩個 command 之間的停頓（ms） */
+export const REPLAY_GAP = 240
 
 /** 只有這些 stat 值得進文字流；其餘（counter.*）是內部計數。 */
 const LOGGED_STATS = new Set(['capital', 'income', 'debt', 'cognition', 'network', 'nerve'])
@@ -68,8 +97,15 @@ export class GameSession {
   /** 不可變：React Compiler 會用識別碼判斷要不要重繪，原地 push 會讓文字流卡住 */
   private entries: readonly LogEntry[] = []
   private readonly unbindAudio: () => void
+  private readonly unbindDirector: () => void
+  private readonly schedule: (callback: () => void) => void
   private entryId = 0
   private version = 0
+  private mode: SessionMode = 'play'
+  private replayLog: readonly Command[] = []
+  private replayIndex = 0
+  private replayPlaying = false
+  private stepping = false
   private snapshot: SessionSnapshot
 
   constructor(options: GameSessionOptions) {
@@ -79,10 +115,19 @@ export class GameSession {
     this.director = new Director()
     this.assets = AssetResolver.fromManifests(this.life.content.manifests)
     this.shareCode = encodeShareCode(this.life.fingerprint, this.seed)
+    this.schedule = options.schedule ?? ((callback) => void setTimeout(callback, REPLAY_GAP))
 
     // 內容包自帶的演出音效（S15 的第二個 id 來源）
     this.audio.useContentSfx(mergeAssetManifests(this.life.content.manifests))
     this.unbindAudio = bindDirectorAudio(this.director, this.audio)
+    // 重播的自動前進：一段演完了才演下一段
+    this.unbindDirector = this.director.subscribe(() => this.onDirectorChange())
+
+    if (options.restore) this.fastForward(options.restore)
+    if (options.replay) {
+      this.mode = 'replay'
+      this.replayLog = [...options.replay]
+    }
 
     this.snapshot = this.build()
   }
@@ -97,7 +142,9 @@ export class GameSession {
   getSnapshot = (): SessionSnapshot => this.snapshot
 
   dispose(): void {
+    this.replayPlaying = false
     this.unbindAudio()
+    this.unbindDirector()
     this.director.pause()
     this.listeners.clear()
   }
@@ -146,6 +193,65 @@ export class GameSession {
     this.director.rate(rate)
   }
 
+  // ── 重播模式（S17）：同一份 commandLog，交給 director 一步一步演 ─────────────
+
+  replayPlay(): void {
+    if (this.mode !== 'replay' || this.replayIndex >= this.replayLog.length) return
+    this.replayPlaying = true
+    this.replayStep()
+  }
+
+  replayPause(): void {
+    if (!this.replayPlaying) return
+    this.replayPlaying = false
+    this.publish()
+  }
+
+  /** 手動走一步（也是測試驅動重播的方式，不必等計時器）。 */
+  replayStep(): void {
+    if (this.mode !== 'replay' || this.stepping) return
+    const command = this.replayLog[this.replayIndex]
+    if (!command) {
+      this.replayPlaying = false
+      this.publish()
+      return
+    }
+
+    this.stepping = true
+    try {
+      this.replayIndex += 1
+      this.dispatch(command)
+    } finally {
+      this.stepping = false
+    }
+
+    // 零長度的演出（例如純數值的一回合）不會再有 tick 通知，這裡自己接上
+    if (this.replayPlaying && this.director.isFinished()) this.onDirectorChange()
+  }
+
+  /** 快轉到底：剩下的 command 一次套用完，不演出。 */
+  replaySkipToEnd(): void {
+    if (this.mode !== 'replay') return
+    this.replayPlaying = false
+    const rest = this.replayLog.slice(this.replayIndex)
+    this.replayIndex = this.replayLog.length
+    this.fastForward(rest)
+    this.director.load(EMPTY_PLAN)
+    this.publish()
+  }
+
+  /**
+   * 從重播接手：重播把 commandLog 原樣重跑了一遍，所以到這裡的狀態
+   * 與存檔當下逐位元相同——直接切回 play 模式就能繼續玩。
+   */
+  takeOver(): void {
+    if (this.mode !== 'replay') return
+    if (this.replayIndex < this.replayLog.length) this.replaySkipToEnd()
+    this.mode = 'play'
+    this.replayPlaying = false
+    this.publish()
+  }
+
   traitName(id: string): string {
     return this.life.content.traits.find((trait) => trait.id === id)?.name ?? id
   }
@@ -162,6 +268,32 @@ export class GameSession {
     this.director.load(compile(effects))
     this.director.play()
 
+    this.publish()
+  }
+
+  /**
+   * 續玩用：把一份 commandLog 直接套進 sim，不演出。文字流照樣長回來——
+   * 那些條目本來就是從 effects 記的，所以重開瀏覽器不會失去這輩子的紀錄。
+   */
+  private fastForward(log: readonly Command[]): void {
+    for (const command of log) this.record(this.life.sim.dispatch(command))
+  }
+
+  private onDirectorChange(): void {
+    if (this.mode !== 'replay' || !this.replayPlaying || this.stepping) return
+    if (!this.director.isFinished()) return
+    if (this.replayIndex >= this.replayLog.length) {
+      this.replayPlaying = false
+      this.publish()
+      return
+    }
+    // 排程而不是直接遞迴：一連串「零長度演出」的 command 不該堆成一疊呼叫堆疊
+    this.schedule(() => {
+      if (this.replayPlaying) this.replayStep()
+    })
+  }
+
+  private publish(): void {
     this.snapshot = this.build()
     this.version += 1
     for (const listener of this.listeners) listener()
@@ -171,17 +303,28 @@ export class GameSession {
     const view = this.life.sim.getPlayerView()
     const turn = view.turnIndex
     const finished = turn >= this.life.totalTurns
+    const replaying = this.mode === 'replay'
 
     return {
       version: this.version,
+      mode: this.mode,
       view,
-      decision: finished ? undefined : nextDecision(view),
+      // 重播中不給決策：這段人生的選擇已經寫在 log 裡了
+      decision: finished || replaying ? undefined : nextDecision(view),
       entries: this.entries,
       finished,
       summary: finished ? summariseLife(this.life, String(this.seed)) : undefined,
       shareCode: this.shareCode,
       turn,
       totalTurns: this.life.totalTurns,
+      replay: replaying
+        ? {
+            index: this.replayIndex,
+            total: this.replayLog.length,
+            playing: this.replayPlaying,
+            done: this.replayIndex >= this.replayLog.length,
+          }
+        : undefined,
     }
   }
 

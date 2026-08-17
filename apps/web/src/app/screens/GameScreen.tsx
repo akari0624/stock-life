@@ -3,6 +3,7 @@ import { useSession, useStage, useStore } from '../hooks.ts'
 import { Stage } from '../../presentation/stage/Stage.tsx'
 import { CapitalPanel } from '../components/CapitalPanel.tsx'
 import { Decisions } from '../components/Decisions.tsx'
+import { ReplayControls } from '../components/ReplayControls.tsx'
 import { Timeline } from '../components/Timeline.tsx'
 import { PlaybackControls } from '../components/PlaybackControls.tsx'
 import { AudioControls } from '../components/AudioControls.tsx'
@@ -29,13 +30,17 @@ export function GameScreen({ session }: { session: GameSession }) {
 
       <CapitalPanel view={snapshot.view} stage={stage} />
 
-      <Decisions
-        session={session}
-        view={snapshot.view}
-        decision={snapshot.decision}
-        finished={snapshot.finished}
-        onSettle={() => store.finish()}
-      />
+      {snapshot.replay ? (
+        <ReplayControls session={session} replay={snapshot.replay} />
+      ) : (
+        <Decisions
+          session={session}
+          view={snapshot.view}
+          decision={snapshot.decision}
+          finished={snapshot.finished}
+          onSettle={() => store.finish()}
+        />
+      )}
 
       <Timeline entries={snapshot.entries} currentYear={snapshot.view.year} />
 
@@ -43,8 +48,9 @@ export function GameScreen({ session }: { session: GameSession }) {
         <span className="text-caption text-at-text-muted">
           第 {snapshot.turn + 1} / {snapshot.totalTurns} 年 · 種子 {session.shareCode}
         </span>
+        {/* 每個決策之後都已自動存檔（存的是 commandLog），所以離開不會弄丟這局 */}
         <button type="button" className={cn(BUTTON)} onClick={() => store.backToTitle()}>
-          放棄這局
+          離開（自動存檔）
         </button>
       </footer>
     </div>

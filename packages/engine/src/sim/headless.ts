@@ -23,11 +23,19 @@ const MAX_DECISIONS_PER_TURN = 32
 
 export type Outcome = 'financially_free' | 'comfortable' | 'getting_by' | 'scraping_by' | 'in_debt'
 
-/** Thresholds are in the same unit as income (万 per year). Tuned in S19. */
+/**
+ * Net-worth thresholds in 万, tuned in S19 against 3,000 balance runs of the
+ * full `core-tw` set. They are percentile decisions, not opinions: under a
+ * middling policy they split lives roughly 12 / 28 / 33 / 27, so no single
+ * bucket swallows the distribution the way `comfortable` did at 84% in S11.
+ *
+ * Read them as passive income at a ~4% withdrawal rate: 5000 万 is 200 万 a
+ * year without working, 2000 万 covers a modest life on top of a pension.
+ */
 export const OUTCOME_THRESHOLDS: Readonly<Record<Exclude<Outcome, 'in_debt'>, number>> = {
-  financially_free: 2000,
-  comfortable: 800,
-  getting_by: 200,
+  financially_free: 5000,
+  comfortable: 2000,
+  getting_by: 800,
   scraping_by: 0,
 }
 

@@ -159,12 +159,19 @@ export {
 } from './domain/systems/world/WorldGenerator.js'
 export {
   randomWorldGenerator,
-  createDefaultWorldGeneratorRegistry,
   CRASH_INTERVAL,
   THEME_WAVE_INTERVAL,
   THEME_WAVE_DURATION,
   DEFAULT_THEME_POOL,
 } from './domain/systems/world/RandomWorldGenerator.js'
+export { createDefaultWorldGeneratorRegistry } from './domain/systems/world/defaultRegistry.js'
+export {
+  twHistoryWorldGenerator,
+  twHistoryPhaseAt,
+  twHistoryNoteAt,
+  TW_HISTORY_ID,
+  TW_HISTORY_LAST_YEAR,
+} from './domain/systems/world/TwHistoryWorldGenerator.js'
 export {
   createEraSystem,
   eraStateFor,
@@ -284,6 +291,7 @@ export {
 export type { PendingEvent, PendingChoiceView } from './domain/systems/event/PendingEvent.js'
 export {
   createEventSystem,
+  enqueueEvent,
   EVENT_SYSTEM_ID,
   EVENT_SYSTEM_ORDER,
   DEFAULT_CHOICE,

@@ -3,6 +3,7 @@
 //
 //   pnpm --filter engine run balance -- --runs 10000
 //   pnpm --filter engine run balance -- --runs 2000 --risk bold --sizing leveraged
+//   pnpm --filter engine run balance -- --runs 1000 --world tw-history --year 1990
 
 import { runBalance, formatBalanceReport } from '../src/sim/balance.js'
 import type { DefaultPolicyOptions } from '../src/sim/policy.js'
@@ -20,10 +21,20 @@ const risk = arg('risk')
 if (risk) policy.risk = risk as EventChoiceId
 const sizing = arg('sizing')
 if (sizing) policy.sizing = sizing as Sizing
-if (arg('sell') !== undefined) policy.holdsThroughTrials = false
+if (process.argv.includes('--sell')) policy.holdsThroughTrials = false
+// 一個「什麼機會都不接」的玩家：用來檢查放掉機會那一線的內容真的長得出來
+if (process.argv.includes('--decline')) policy.takesOpportunities = false
 
 const started = Date.now()
-const report = await runBalance({ runs, seedPrefix: arg('seed') ?? 'balance', policy })
+const world = arg('world')
+const startYear = arg('year')
+const report = await runBalance({
+  runs,
+  seedPrefix: arg('seed') ?? 'balance',
+  policy,
+  ...(world ? { worldGeneratorId: world } : {}),
+  ...(startYear ? { startYear: Number.parseInt(startYear, 10) } : {}),
+})
 const elapsed = ((Date.now() - started) / 1000).toFixed(1)
 
 console.log(formatBalanceReport(report))

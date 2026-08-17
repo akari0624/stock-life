@@ -56,9 +56,9 @@ const playToSettlement = (session: GameSession): void => {
   throw new Error('一局跑不完（超過步數上限）')
 }
 
-const startWith = async (seedInput: string) => {
+const startWith = async (seedInput: string, worldMode: 'random' | 'history' = 'random') => {
   const store = new AppStore()
-  store.setSettings({ name: '測試員', startYear: 1990, seedInput })
+  store.setSettings({ name: '測試員', startYear: 1990, seedInput, worldMode })
   await store.startLife()
   const snapshot = store.getSnapshot()
   if (!snapshot.session) throw new Error(`開始人生失敗：${snapshot.error ?? '未知原因'}`)
@@ -82,6 +82,17 @@ describe('從標題玩到結算', () => {
     expect(snapshot.summary?.outcome).toBeTruthy()
     // 文字流真的長出東西了
     expect(snapshot.entries.length).toBeGreaterThan(20)
+    session.dispose()
+  })
+
+  it('台股歷史模式也玩得完一整局（S19 的第二個世界）', async () => {
+    const { session } = await startWith('1990', 'history')
+    expect(session.life.timeline.generatorId).toBe('tw-history')
+    // 崩盤在該來的年份來，不是隨機的
+    expect(session.life.timeline.phases.find((p) => p.startYear === 1990)?.phase).toBe('crash')
+
+    playToSettlement(session)
+    expect(session.getSnapshot().summary?.finalAge).toBe(65)
     session.dispose()
   })
 

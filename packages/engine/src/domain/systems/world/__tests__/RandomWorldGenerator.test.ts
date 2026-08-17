@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { SeededRng } from '../../../rng/SeededRng.js'
 import {
   randomWorldGenerator,
-  createDefaultWorldGeneratorRegistry,
   CRASH_INTERVAL,
   THEME_WAVE_INTERVAL,
   THEME_WAVE_DURATION,
   DEFAULT_THEME_POOL,
 } from '../RandomWorldGenerator.js'
+import { createDefaultWorldGeneratorRegistry } from '../defaultRegistry.js'
 import { WorldGeneratorRegistry, WORLD_RNG_STREAM } from '../WorldGenerator.js'
 import { eraAt, ERA_PHASES, type Timeline } from '../Timeline.js'
 
@@ -145,9 +145,9 @@ describe('eraAt', () => {
 })
 
 describe('WorldGeneratorRegistry', () => {
-  it('ships `random` preregistered and can look it up by id', () => {
+  it('ships both official generators preregistered and can look them up by id', () => {
     const registry = createDefaultWorldGeneratorRegistry()
-    expect(registry.ids()).toContain('random')
+    expect(registry.ids()).toEqual(expect.arrayContaining(['random', 'tw-history']))
     expect(registry.get('random')).toBe(randomWorldGenerator)
   })
 

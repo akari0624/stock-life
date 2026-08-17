@@ -11,6 +11,9 @@ export interface BalanceOptions {
   seedPrefix?: string
   sources?: () => ContentSource[]
   policy?: DefaultPolicyOptions
+  /** §7.4 world to play in — 'random' (default) or 'tw-history'. */
+  worldGeneratorId?: string
+  startYear?: number
 }
 
 export interface BalanceReport {
@@ -95,6 +98,8 @@ export async function runBalance(options: BalanceOptions): Promise<BalanceReport
       seed: `${prefix}-${i}`,
       sources: sources(),
       policy: defaultPolicy(options.policy),
+      worldGeneratorId: options.worldGeneratorId,
+      startYear: options.startYear,
     })
     if (!outcome.ok) throw new Error(`balance run ${i} failed to load content: ${outcome.errors[0]?.message}`)
     summaries.push(outcome.result.summary)

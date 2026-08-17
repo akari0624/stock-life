@@ -5,6 +5,7 @@ import type { Sizing } from '../../expr/effects.js'
 import { addStat } from '../../state/stats.js'
 import { LIFE_TIER, type Opportunity } from '../opportunity/Opportunity.js'
 import { MOMENT_POSITION_CLOSE, pushMoment } from '../trait/moments.js'
+import { enqueueEvent } from '../event/EventSystem.js'
 import {
   resolveTruth,
   RUIN_RECOVERY,
@@ -207,7 +208,9 @@ export function createPositionSystem(): GameSystem {
           addStat(state, COUNTER_TRIALS_FACED, 1)
           emit({ type: 'stat.add', key: COUNTER_TRIALS_FACED, value: 1 })
           // Trials are ordinary content events (§7.1): the pipeline that
-          // renders and resolves any other event renders these too.
+          // renders and resolves any other event renders these too. The queue
+          // is the state change; the effect is what the performance hears.
+          enqueueEvent(state, trialId)
           emit({ type: 'event.trigger', eventId: trialId })
         }
         return

@@ -5,7 +5,7 @@ import { createInitialGameState, DEFAULT_STARTING_CAPITAL } from '../domain/stat
 import { indexOpportunities } from '../domain/systems/opportunity/Opportunity.js'
 import { createEraSystem, eraStateFor } from '../domain/systems/world/EraSystem.js'
 import { WORLD_RNG_STREAM, type WorldGeneratorRegistry } from '../domain/systems/world/WorldGenerator.js'
-import { createDefaultWorldGeneratorRegistry } from '../domain/systems/world/RandomWorldGenerator.js'
+import { createDefaultWorldGeneratorRegistry } from '../domain/systems/world/defaultRegistry.js'
 import type { Timeline } from '../domain/systems/world/Timeline.js'
 import { createDiceSystem } from '../domain/systems/economy/DiceSystem.js'
 import { createCapitalSystem } from '../domain/systems/economy/CapitalSystem.js'

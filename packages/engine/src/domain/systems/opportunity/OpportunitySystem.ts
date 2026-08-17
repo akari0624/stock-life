@@ -19,10 +19,18 @@ import {
 export const OPPORTUNITY_SYSTEM_ID = 'opportunity'
 export const OPPORTUNITY_SYSTEM_ORDER = 70
 
-/** Baseline odds one source passes something along in a given year. */
-export const BASE_SOURCE_CHANCE = 0.02
-export const NETWORK_PER_SOURCE = 0.004
-export const MAX_SOURCE_CHANCE = 0.25
+/**
+ * Baseline odds one source passes something along in a given year.
+ *
+ * Tuned in S19 against the balance runner: with the full `core-tw` content
+ * set these numbers put a handful of proposals in a lifetime, which is what
+ * §1 means by "你會遇到幾次真正的機會". They were several times higher while
+ * the pack had a single opportunity in it — an arrival rate only means
+ * something read against how much content can match it.
+ */
+export const BASE_SOURCE_CHANCE = 0.004
+export const NETWORK_PER_SOURCE = 0.0011
+export const MAX_SOURCE_CHANCE = 0.08
 /** A life's worth of decisions is meant to be few (§1) — one proposal a year. */
 export const MAX_OFFERS_PER_TURN = 1
 

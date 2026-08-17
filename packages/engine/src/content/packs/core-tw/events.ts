@@ -1,114 +1,28 @@
-// The three trial events referenced by `mem_supercycle_a.trials` are ordinary
-// events (§7.1: "trials 走一般事件管線") — PositionSystem triggers them by id,
-// the event pipeline renders and resolves them like any other.
+import { workEvents } from './events/work.js'
+import { marketEvents } from './events/market.js'
+import { moneyEvents } from './events/money.js'
+import { lifeEvents } from './events/life.js'
+import { eraEvents } from './events/era.js'
+import { trialEvents } from './events/trials.js'
+
+// §7.2 的事件庫。分檔只是為了讀得下去，載入器看到的是一個陣列。
+//
+// 五個主題各自負責一種張力：
+//   work   工作         —— 收入從哪裡來，時間往哪裡去
+//   market 市場旁邊     —— 養出 §7.5 那些人格的日常動作
+//   money  錢的日常     —— 房子、車子、父母、稅、債
+//   life   人生         —— nerve 在這裡累積，也在這裡被消耗
+//   era    時代         —— 條件寫在 era.phase 上，兩種世界模式都成立
+//   trials 持倉考驗     —— weight: 0，只能被 event.trigger 叫到
+
 export const coreTwEvents = [
-  {
-    id: 'overtime_crunch',
-    require: { '==': ['career.industry', 'tech'] },
-    weight: 10,
-    choices: [
-      { id: 'safe', label: '準時下班', odds: '+20', mag: 1 },
-      { id: 'normal', label: '配合加班', odds: '0', mag: 2 },
-      { id: 'bold', label: '拼命表現', odds: '-15', mag: 3 },
-    ],
-    good: { text: '主管注意到你的產出，加薪有望。', effects: [{ type: 'stat.add', key: 'income', value: 2 }] },
-    bad: { text: '你累壞了，體力所剩無幾。', effects: [{ type: 'stat.add', key: 'time', value: -2 }] },
-    scene: { bg: 'office', sfx: 'keyboard' },
-  },
-  {
-    id: 'market_selloff',
-    require: { '>=': ['position.count', 0] },
-    weight: 8,
-    choices: [
-      { id: 'safe', label: '停損出場', odds: '+30', mag: 1 },
-      { id: 'normal', label: '再觀察看看', odds: '0', mag: 2 },
-      { id: 'bold', label: '逢低加碼', odds: '-25', mag: 3 },
-    ],
-    good: {
-      text: '你撐過了帳面波動，之後市場回穩。',
-      effects: [{ type: 'stat.add', key: 'held_through_drawdown', value: 1 }],
-    },
-    bad: { text: '你受不了心理壓力，認賠出場。', effects: [{ type: 'stat.add', key: 'panic_sold', value: 1 }] },
-    scene: { bg: 'trading_floor', sfx: 'alert' },
-  },
-  {
-    id: 'networking_night',
-    require: { '>=': ['age', 22] },
-    weight: 6,
-    choices: [
-      { id: 'safe', label: '早點回家', odds: '+15', mag: 1 },
-      { id: 'normal', label: '交流一下', odds: '0', mag: 2 },
-      { id: 'bold', label: '積極認識新朋友', odds: '-10', mag: 3 },
-    ],
-    good: { text: '你認識了一位業界前輩。', effects: [{ type: 'stat.add', key: 'network', value: 3 }] },
-    bad: { text: '整晚都在尬聊，什麼收穫都沒有。', effects: [{ type: 'stat.add', key: 'time', value: -1 }] },
-    scene: { bg: 'bar', sfx: 'chatter' },
-  },
-  {
-    id: 'drawdown_50',
-    require: { '>=': ['position.count', 1] },
-    weight: 0,
-    choices: [
-      { id: 'safe', label: '減碼一半，先睡得著', odds: '+25', mag: 1 },
-      { id: 'normal', label: '不看盤了', odds: '0', mag: 2 },
-      { id: 'bold', label: '一股不賣', odds: '-20', mag: 3 },
-    ],
-    good: { text: '帳面腰斬，你撐住了。', effects: [{ type: 'stat.add', key: 'nerve', value: -5 }] },
-    bad: { text: '每天睜眼就是綠的，你開始懷疑自己。', effects: [{ type: 'stat.add', key: 'nerve', value: -15 }] },
-    scene: { bg: 'bedroom_night', fx: 'crash_red', sfx: 'heartbeat' },
-  },
-  {
-    id: 'triple_temptation',
-    require: { '>=': ['position.count', 1] },
-    weight: 0,
-    choices: [
-      { id: 'safe', label: '獲利了結', odds: '+30', mag: 1 },
-      { id: 'normal', label: '賣一半', odds: '0', mag: 2 },
-      { id: 'bold', label: '續抱', odds: '-15', mag: 3 },
-    ],
-    good: { text: '三倍了。你關掉App，繼續過日子。', effects: [{ type: 'stat.add', key: 'cognition', value: 2 }] },
-    bad: { text: '三倍了。你整晚在算現在賣掉能買幾坪。', effects: [{ type: 'stat.add', key: 'nerve', value: -10 }] },
-    scene: { bg: 'office_night', sfx: 'notification' },
-  },
-  {
-    id: 'family_emergency',
-    require: { '>=': ['position.count', 1] },
-    weight: 0,
-    choices: [
-      { id: 'safe', label: '賣掉一部分應急', odds: '+35', mag: 1 },
-      { id: 'normal', label: '先借一點', odds: '0', mag: 2 },
-      { id: 'bold', label: '想辦法不動到部位', odds: '-20', mag: 3 },
-    ],
-    good: { text: '錢調度過來了，部位還在。', effects: [{ type: 'stat.add', key: 'network', value: 1 }] },
-    bad: { text: '家裡的事等不了，你只能認了。', effects: [{ type: 'stat.add', key: 'nerve', value: -12 }] },
-    scene: { bg: 'hospital', sfx: 'phone_ring' },
-  },
-  {
-    // §1.3: the negative chain that only a leveraged wipeout unlocks. Gated
-    // on the flag PositionSystem sets, so it is content — not engine code.
-    id: 'debt_collector_call',
-    require: { all: [{ flag: 'leveraged_wipeout' }, { '>': ['debt', 0] }] },
-    weight: 12,
-    choices: [
-      { id: 'safe', label: '老實說明，談分期', odds: '+20', mag: 1 },
-      { id: 'normal', label: '先還一點', odds: '0', mag: 2 },
-      { id: 'bold', label: '不接電話', odds: '-25', mag: 3 },
-    ],
-    good: { text: '對方願意讓你慢慢還。', effects: [{ type: 'stat.add', key: 'nerve', value: -5 }] },
-    bad: { text: '家裡的人都知道了。', effects: [{ type: 'stat.add', key: 'nerve', value: -20 }] },
-    scene: { bg: 'home_night', sfx: 'phone_ring' },
-  },
-  {
-    id: 'health_scare',
-    require: { all: [{ flag: 'leveraged_wipeout' }, { '<=': ['nerve', 40] }] },
-    weight: 8,
-    choices: [
-      { id: 'safe', label: '去看醫生', odds: '+25', mag: 1 },
-      { id: 'normal', label: '請幾天假', odds: '0', mag: 2 },
-      { id: 'bold', label: '撐著上班', odds: '-30', mag: 3 },
-    ],
-    good: { text: '只是壓力太大，醫生要你休息。', effects: [{ type: 'stat.add', key: 'nerve', value: 10 }] },
-    bad: { text: '身體開始替你做決定。', effects: [{ type: 'stat.add', key: 'time', value: -15 }] },
-    scene: { bg: 'hospital', sfx: 'monitor_beep' },
-  },
+  ...workEvents,
+  ...marketEvents,
+  ...moneyEvents,
+  ...lifeEvents,
+  ...eraEvents,
+  ...trialEvents,
 ]
+
+/** 考驗事件的 id 清單——機會的 `trials` 欄位從這裡挑。 */
+export const coreTwTrialIds = trialEvents.map((event) => event.id)

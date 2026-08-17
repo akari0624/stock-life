@@ -335,9 +335,11 @@ export {
   type PolicyContext,
   type DefaultPolicyOptions,
 } from './sim/policy.js'
+export { nextDecision, type Decision } from './sim/decisions.js'
 export {
   runLife,
   replayLife,
+  summariseLife,
   outcomeFor,
   OUTCOME_THRESHOLDS,
   type Outcome,

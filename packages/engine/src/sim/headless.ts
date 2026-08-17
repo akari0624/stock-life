@@ -80,7 +80,11 @@ export interface RunLifeOptions extends Omit<LifeOptions, 'sources'> {
 
 export type RunLifeOutcome = { ok: true; result: RunLifeResult } | { ok: false; errors: ContentValidationIssue[] }
 
-function summarise(life: Life, seed: string): LifeSummary {
+/**
+ * The settlement summary. Exported because the app's settlement screen (S16)
+ * must show the same numbers the balance runner reports — one definition.
+ */
+export function summariseLife(life: Life, seed: string): LifeSummary {
   const state = life.sim.getSnapshot().state
   const counter = (key: string): number => state.counters[key] ?? 0
   const netWorth = state.capitalState.capital - state.capitalState.debt
@@ -137,7 +141,7 @@ export async function runLife(options: RunLifeOptions): Promise<RunLifeOutcome> 
   return {
     ok: true,
     result: {
-      summary: summarise(life, String(options.seed)),
+      summary: summariseLife(life, String(options.seed)),
       commandLog: [...life.sim.getCommandLog()],
       life,
     },
@@ -161,6 +165,6 @@ export async function replayLife(
 
   return {
     ok: true,
-    result: { summary: summarise(life, String(options.seed)), commandLog: [...commandLog], life },
+    result: { summary: summariseLife(life, String(options.seed)), commandLog: [...commandLog], life },
   }
 }

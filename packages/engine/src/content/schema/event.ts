@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { exprSchema } from './expr.js'
 import { stateEffectSchema, sceneRefSchema } from './effect.js'
+import type { EventDef } from '../../domain/systems/event/EventDef.js'
 
 // §7.2: the yakyulife three-tier risk shape — choices are always exactly
 // safe/normal/bold, each appearing once, so success rate and what's shown
@@ -18,10 +19,12 @@ const outcomeSchema = z.object({
   effects: z.array(stateEffectSchema),
 })
 
-export const eventSchema = z.object({
+export const eventSchema: z.ZodType<EventDef> = z.object({
   id: z.string().min(1),
   require: exprSchema,
-  weight: z.number().positive(),
+  // 0 means "never drawn at random" — the event is only reachable through an
+  // explicit `event.trigger` (position trials work this way, §7.1).
+  weight: z.number().nonnegative(),
   choices: z
     .array(choiceSchema)
     .length(3)
@@ -33,4 +36,10 @@ export const eventSchema = z.object({
   scene: sceneRefSchema,
 })
 
-export type Event = z.infer<typeof eventSchema>
+export type {
+  EventDef,
+  EventDef as Event,
+  EventChoice,
+  EventChoiceId,
+  EventOutcome,
+} from '../../domain/systems/event/EventDef.js'

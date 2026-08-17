@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { exprSchema } from './expr.js'
 import { sizingSchema, sceneRefSchema } from './effect.js'
+import type { Opportunity } from '../../domain/systems/opportunity/Opportunity.js'
 
 // §7.1: `truth` is deliberately schema-validated even though the player
 // never sees it — it's still content data, seeded/derived per-era at S9,
@@ -29,7 +30,7 @@ export const signalSchema = z
     message: 'signal must fill in at least one of low/mid/high',
   })
 
-export const opportunitySchema = z.object({
+export const opportunitySchema: z.ZodType<Opportunity> = z.object({
   id: z.string().min(1),
   tier: z.enum(['life', 'normal']),
   window: z.object({
@@ -45,4 +46,10 @@ export const opportunitySchema = z.object({
   scene: sceneRefSchema,
 })
 
-export type Opportunity = z.infer<typeof opportunitySchema>
+export type {
+  Opportunity,
+  OpportunityTruth,
+  OpportunitySignal,
+  SignalLevel,
+  SignalReveal,
+} from '../../domain/systems/opportunity/Opportunity.js'

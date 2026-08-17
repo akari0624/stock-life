@@ -7,10 +7,10 @@ export const coreTwManifest = {
   engineApi: `^${ENGINE_API_VERSION}`,
   facadeVersion: FACADE_VERSION,
   provides: {
-    events: 3,
+    events: 8,
     opportunities: 1,
     careers: 2,
-    traits: 1,
+    traits: 3,
     // tw-history ships in S19; random world generation is engine-level (S7),
     // not something this pack provides content for yet.
     worldGenerators: [],

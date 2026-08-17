@@ -10,7 +10,11 @@ import type { Calendar } from '../Calendar.js'
 // undo/redo. Purity only needs to hold at this function's boundary (§4.3):
 // clone once, mutate the clone freely, never touch the state passed in.
 
-const TURN_PHASES: readonly Phase[] = ['turn.start', 'pre', 'mid', 'end', 'turn.end']
+// turn.start/pre/mid/end resolve the turn being played, then the calendar
+// rolls over, then turn.end runs — so anything time-derived (era, S7) is
+// resynced for the new year before the state leaves advance().
+const TURN_PHASES: readonly Phase[] = ['turn.start', 'pre', 'mid', 'end']
+const POST_ROLLOVER_PHASE: Phase = 'turn.end'
 
 export interface AdvanceDeps {
   registry: SystemRegistry
@@ -64,6 +68,14 @@ export function createAdvance(deps: AdvanceDeps): Advance {
       next.year = point.year
       next.player.age = point.age
       next.player.stage = point.stage
+
+      for (const system of deps.registry.list()) {
+        system.onPhase?.(POST_ROLLOVER_PHASE, {
+          state: next,
+          rng: streamFor(system.id, POST_ROLLOVER_PHASE),
+          emit,
+        })
+      }
     }
 
     return { nextState: next, effects }

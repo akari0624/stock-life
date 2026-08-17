@@ -25,9 +25,15 @@ export class SystemRegistry {
   /**
    * The static fields (§3, §6.1) plus whatever every registered system
    * contributes — this is what grows automatically as S7+ adds systems,
-   * with no manual sync required.
+   * with no manual sync required. A system contributing a path that already
+   * exists statically replaces it (that's how EraSystem attaches the real
+   * `era.phase` enum), so the result is deduped by path.
    */
   allFacadeFields(): FacadeField[] {
-    return [...listFacadeFields(), ...this.facadeFields()]
+    const byPath = new Map<string, FacadeField>()
+    for (const field of [...listFacadeFields(), ...this.facadeFields()]) {
+      byPath.set(field.path, field)
+    }
+    return [...byPath.values()]
   }
 }

@@ -1,7 +1,11 @@
 import { z } from 'zod'
 import { exprSchema } from './expr.js'
+import type { CareerGraph } from '../../domain/systems/career/CareerGraph.js'
 
 // §7.3: career is a directed graph, not a linear array (TODO.md #3).
+// The shape itself is declared in domain/ (where the system that consumes it
+// lives); this file only proves incoming JSON conforms to it — which is why
+// the schema is annotated with the domain type rather than inferring its own.
 
 const careerNodeSchema = z.object({
   id: z.string().min(1),
@@ -19,7 +23,7 @@ const careerEdgeSchema = z.object({
   surfacedAs: z.enum(['opportunity']),
 })
 
-export const careerGraphSchema = z
+export const careerGraphSchema: z.ZodType<CareerGraph> = z
   .object({
     nodes: z.array(careerNodeSchema).min(1),
     edges: z.array(careerEdgeSchema),
@@ -32,4 +36,4 @@ export const careerGraphSchema = z
     { message: 'every edge must reference node ids that exist in nodes[]' },
   )
 
-export type CareerGraph = z.infer<typeof careerGraphSchema>
+export type { CareerGraph, CareerNode, CareerEdge } from '../../domain/systems/career/CareerGraph.js'

@@ -1,5 +1,4 @@
 import {
-  createCoreTwSource,
   createLife,
   decodeShareCode,
   describePacks,
@@ -11,6 +10,7 @@ import {
 } from '@stock-life/engine'
 import { themes, type Theme } from '@stock-life/tokens/keys'
 import { GameSession } from './GameSession.ts'
+import { PackLibrary, type InstalledPack } from './packs/PackLibrary.ts'
 import { SaveStorage } from './save/SaveStorage.ts'
 import { readShareCode, writeShareCode } from './save/shareUrl.ts'
 import { audioEngine, isAudioLocked, playSound, unlockAudio } from '../presentation/audio/playSound.ts'
@@ -44,6 +44,10 @@ export interface AppSnapshot {
   starting: boolean
   audioLocked: boolean
   packs: readonly Manifest[]
+  /** 玩家自己裝的內容包（core-tw 是內建的，不在這份清單裡） */
+  library: readonly InstalledPack[]
+  /** 匯入失敗的說明；成功則是一句確認 */
+  packMessage: string | undefined
   /** 上一局的存檔（`seed + 指紋 + commandLog`），標題頁用它決定要不要顯示「繼續」 */
   saved: SaveFile | undefined
   /** 存檔壞掉／版本不合時的說明，讓玩家知道為什麼沒有「繼續」可按 */
@@ -90,7 +94,9 @@ export function parseSeedInput(input: string): ParsedSeed {
 }
 
 export interface AppStoreOptions {
+  /** 覆寫內容來源（測試用）；預設是「core-tw + 玩家裝的包」 */
   sources?: readonly ContentSource[]
+  library?: PackLibrary
   storage?: SaveStorage
   /** 測試注入查詢字串；預設讀網址列的 `?s=` */
   search?: string
@@ -124,7 +130,8 @@ export function explainSaveError(error: SaveError): string {
 
 export class AppStore {
   private readonly listeners = new Set<() => void>()
-  private readonly sources: readonly ContentSource[]
+  private readonly library: PackLibrary
+  private readonly sourcesOverride: readonly ContentSource[] | undefined
   private readonly storage: SaveStorage
   private readonly syncUrl: boolean
   private unsubscribeSession: (() => void) | undefined
@@ -136,12 +143,15 @@ export class AppStore {
     starting: false,
     audioLocked: true,
     packs: [],
+    library: [],
+    packMessage: undefined,
     saved: undefined,
     saveIssue: undefined,
   }
 
   constructor(options: AppStoreOptions = {}) {
-    this.sources = options.sources ?? [createCoreTwSource()]
+    this.library = options.library ?? new PackLibrary()
+    this.sourcesOverride = options.sources
     this.storage = options.storage ?? new SaveStorage()
     this.syncUrl = options.syncUrl ?? true
 
@@ -153,9 +163,15 @@ export class AppStore {
     this.snapshot = {
       ...this.snapshot,
       settings,
+      library: this.library.list(),
       saved: read.status === 'ok' ? read.save : undefined,
       saveIssue: read.status === 'invalid' ? `存檔讀不出來（${read.message}），只能重新開始。` : undefined,
     }
+  }
+
+  /** core-tw + 玩家啟用的包。**每次開局重新取**，所以剛匯入的包立刻算數。 */
+  private get sources(): readonly ContentSource[] {
+    return this.sourcesOverride ?? this.library.sources()
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -238,6 +254,54 @@ export class AppStore {
   /** 重播模式：同一份 log，交給 director 一步一步演出來。 */
   async replaySave(): Promise<void> {
     await this.resume('replay')
+  }
+
+  // ── 內容包（S18） ─────────────────────────────────────────────────────────
+
+  /**
+   * 匯入一個內容包。參數是 `ContentSource`，所以「從檔案」與「貼上」共用這條路，
+   * 日後多一個 UrlSource 也一樣（TODO.md #2）。
+   *
+   * 驗不過就只回報錯誤——既有的清單一個字都不會動。
+   */
+  async importPack(source: ContentSource): Promise<boolean> {
+    const result = await this.library.install(source)
+    if (!result.ok) {
+      this.patch({
+        packMessage: `「${source.label}」匯入失敗：${result.errors
+          .slice(0, 4)
+          .map((issue) => `${issue.section}${issue.path.length > 0 ? `/${issue.path.join('.')}` : ''}: ${issue.message}`)
+          .join('；')}`,
+      })
+      return false
+    }
+
+    playSound('ui_option_select')
+    this.patch({
+      library: this.library.list(),
+      packMessage: `${result.replaced ? '已更新' : '已匯入'} ${result.pack.id} v${result.pack.version}。下一局開始生效（分享碼的指紋也會跟著變）。`,
+    })
+    return true
+  }
+
+  setPackEnabled(id: string, enabled: boolean): void {
+    playSound('ui_toggle')
+    this.library.setEnabled(id, enabled)
+    this.patch({ library: this.library.list(), packMessage: `${id} 已${enabled ? '啟用' : '停用'}，下一局生效。` })
+  }
+
+  removePack(id: string): void {
+    playSound('ui_back')
+    this.library.remove(id)
+    this.patch({ library: this.library.list(), packMessage: `${id} 已移除。` })
+  }
+
+  exportPack(id: string): string | undefined {
+    return this.library.exportText(id)
+  }
+
+  dismissPackMessage(): void {
+    if (this.snapshot.packMessage) this.patch({ packMessage: undefined })
   }
 
   clearSave(): void {

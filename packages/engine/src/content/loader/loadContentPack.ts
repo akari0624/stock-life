@@ -5,9 +5,12 @@ import { eventSchema, type Event } from '../schema/event.js'
 import { careerGraphSchema, type CareerGraph } from '../schema/career.js'
 import { traitSchema, type Trait } from '../schema/trait.js'
 import { checkCompatibility } from './compatibility.js'
+import { checkTrust, type ContentTrustPolicy } from './trust.js'
 import type { ContentSource } from './ContentSource.js'
 
 export type ContentValidationSection =
+  | 'source'
+  | 'trust'
   | 'manifest'
   | 'opportunities'
   | 'events'
@@ -34,6 +37,11 @@ export interface LoadedContentPack {
 
 export type LoadResult = { ok: true; pack: LoadedContentPack } | { ok: false; errors: ContentValidationIssue[] }
 
+export interface LoadOptions {
+  /** Overrides the "is this reasonable?" limits (`trust.ts`). */
+  trustPolicy?: ContentTrustPolicy
+}
+
 function collectIssues(section: ContentValidationSection, error: z.ZodError | undefined): ContentValidationIssue[] {
   if (!error) return []
   return error.issues.map((issue) => ({
@@ -48,8 +56,19 @@ function collectIssues(section: ContentValidationSection, error: z.ZodError | un
  * (core-tw) and third-party mods go through this exact same function —
  * there is no privileged path (§6.4 dogfooding).
  */
-export async function loadContentPack(source: ContentSource): Promise<LoadResult> {
-  const raw = await source.load()
+export async function loadContentPack(source: ContentSource, options: LoadOptions = {}): Promise<LoadResult> {
+  let raw
+  try {
+    raw = await source.load()
+  } catch (error) {
+    // A source that cannot even produce bytes (bad JSON, unreadable file, one
+    // day a 404) is a validation failure like any other — never a throw that
+    // takes the app down with it.
+    return {
+      ok: false,
+      errors: [{ section: 'source', path: [source.label], message: (error as Error).message }],
+    }
+  }
 
   const manifestResult = manifestSchema.safeParse(raw.manifest)
   const opportunitiesResult = z.array(opportunitySchema).safeParse(raw.opportunities)
@@ -75,14 +94,26 @@ export async function loadContentPack(source: ContentSource): Promise<LoadResult
     return { ok: false, errors }
   }
 
-  return {
-    ok: true,
-    pack: {
-      manifest: manifestResult.data,
-      opportunities: opportunitiesResult.data,
-      events: eventsResult.data,
-      careerGraph: careerGraphResult.data,
-      traits: traitsResult.data,
-    },
+  const pack: LoadedContentPack = {
+    manifest: manifestResult.data,
+    opportunities: opportunitiesResult.data,
+    events: eventsResult.data,
+    careerGraph: careerGraphResult.data,
+    traits: traitsResult.data,
   }
+
+  // Well-formed, but is it reasonable? (TODO.md #2 keeps these two separate.)
+  const trustIssues = checkTrust({
+    pack,
+    bytes: (source as { sizeBytes?: number }).sizeBytes,
+    policy: options.trustPolicy,
+  })
+  if (trustIssues.length > 0) {
+    return {
+      ok: false,
+      errors: trustIssues.map((issue) => ({ section: 'trust' as const, path: [issue.rule], message: issue.message })),
+    }
+  }
+
+  return { ok: true, pack }
 }

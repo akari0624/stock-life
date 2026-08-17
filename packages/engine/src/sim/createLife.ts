@@ -18,7 +18,7 @@ import { createEventSystem } from '../domain/systems/event/EventSystem.js'
 import { createCounterSystem } from '../domain/systems/counter/CounterSystem.js'
 import { createTraitSystem } from '../domain/systems/trait/TraitSystem.js'
 import { loadContentPack, type ContentValidationIssue, type LoadedContentPack } from '../content/loader/loadContentPack.js'
-import { mergeContentPacks, type MergedContent } from '../content/loader/merge.js'
+import { mergeContentPacks, validateMergedContent, type MergedContent } from '../content/loader/merge.js'
 import type { ContentSource } from '../content/loader/ContentSource.js'
 import { Sim } from './Sim.js'
 
@@ -92,6 +92,10 @@ export async function createLife(options: LifeOptions): Promise<CreateLifeResult
 
   const { content, fingerprint } = mergeContentPacks(packs)
 
+  // Cross-pack rules: a single pack may be a fragment, the combination may not.
+  const mergedIssues = validateMergedContent(content)
+  if (mergedIssues.length > 0) return { ok: false, errors: mergedIssues }
+
   const startAge = options.startAge ?? DEFAULT_START_AGE
   const endAge = options.endAge ?? DEFAULT_END_AGE
   const startYear = options.startYear ?? DEFAULT_START_YEAR
@@ -111,8 +115,7 @@ export async function createLife(options: LifeOptions): Promise<CreateLifeResult
 
   const opportunities = indexOpportunities(content.opportunities)
   const positionDeps: PositionDeps = { turnsPerYear: calendar.turnsPerYear }
-  const startNodeId = options.startNodeId ?? content.careerGraph.nodes[0]?.id
-  if (!startNodeId) return { ok: false, errors: [{ section: 'careerGraph', path: ['nodes'], message: 'no career nodes to start from' }] }
+  const startNodeId = options.startNodeId ?? content.careerGraph.nodes[0]!.id
 
   const registry = new SystemRegistry()
   registry.register(createEraSystem({ timeline }))

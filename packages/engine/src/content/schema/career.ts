@@ -23,17 +23,19 @@ const careerEdgeSchema = z.object({
   surfacedAs: z.enum(['opportunity']),
 })
 
-export const careerGraphSchema: z.ZodType<CareerGraph> = z
-  .object({
-    nodes: z.array(careerNodeSchema).min(1),
-    edges: z.array(careerEdgeSchema),
-  })
-  .refine(
-    (graph) => {
-      const ids = new Set(graph.nodes.map((n) => n.id))
-      return graph.edges.every((e) => ids.has(e.from) && ids.has(e.to))
-    },
-    { message: 'every edge must reference node ids that exist in nodes[]' },
-  )
+/**
+ * Deliberately *no* per-pack minimum and no per-pack "edges must point at
+ * known nodes" rule: a mod that only adds events should not have to invent a
+ * career node, and a mod whose whole point is a new branch off core-tw's graph
+ * must be able to name a node it did not author (S18).
+ *
+ * Both invariants are real — they just belong to the **merged** content set,
+ * where the graph is actually complete. `validateMergedContent()` checks them
+ * there, once, for every pack combination the player has loaded.
+ */
+export const careerGraphSchema: z.ZodType<CareerGraph> = z.object({
+  nodes: z.array(careerNodeSchema),
+  edges: z.array(careerEdgeSchema),
+})
 
 export type { CareerGraph, CareerNode, CareerEdge } from '../../domain/systems/career/CareerGraph.js'

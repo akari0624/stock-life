@@ -47,6 +47,7 @@ function weightedPick(candidates: readonly EventDef[], rng: RngStream): EventDef
 function toPending(event: EventDef): PendingEvent {
   return {
     eventId: event.id,
+    ...(event.prompt === undefined ? {} : { prompt: event.prompt }),
     choices: event.choices.map((choice) => ({
       id: choice.id,
       label: choice.label,
@@ -87,6 +88,21 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
     enqueueEvent: (ctx, eventId) => enqueueEvent(ctx.state, eventId),
   }
 
+  /**
+   * §7.2's first half: an event is *presented* before it is answered.
+   * The stage gets the scene and the situation here; the outcome comes later,
+   * in `resolve()`. Without this the player decides while looking at nothing.
+   */
+  const present = (ctx: SystemCtx, event: EventDef): void => {
+    ctx.state.events.pending.push(toPending(event))
+
+    if (event.scene.bg) ctx.emit({ type: 'scene.bg', id: event.scene.bg })
+    if (event.scene.actor) ctx.emit({ type: 'scene.actor', id: event.scene.actor })
+    if (event.prompt) {
+      ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? 'narrator', text: event.prompt })
+    }
+  }
+
   const resolve = (ctx: SystemCtx, pending: PendingEvent, choiceId: string): void => {
     const event = byId.get(pending.eventId)
     ctx.state.events.pending = ctx.state.events.pending.filter((p) => p !== pending)
@@ -101,8 +117,8 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
     const good = ctx.rng.chance(chance / 100)
     const outcome = good ? event.good : event.bad
 
-    if (event.scene.bg) ctx.emit({ type: 'scene.bg', id: event.scene.bg })
-    if (event.scene.actor) ctx.emit({ type: 'scene.actor', id: event.scene.actor })
+    // The stage was already dressed when the event was presented, and the
+    // director keeps it between plans — so this half only speaks the outcome.
     ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? 'narrator', text: outcome.text })
     if (event.scene.sfx) ctx.emit({ type: 'scene.sfx', id: event.scene.sfx })
     if (event.scene.fx) ctx.emit({ type: 'scene.fx', id: event.scene.fx })
@@ -128,7 +144,7 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
       const event = byId.get(id)
       // An unknown id is a content problem, not a crash: the trigger is
       // simply dropped (§6.2 keeps hard failures at load time).
-      if (event) ctx.state.events.pending.push(toPending(event))
+      if (event) present(ctx, event)
     }
   }
 
@@ -155,7 +171,7 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
         (event) => event.weight > 0 && isSatisfied(event.require, { state: ctx.state, rng: ctx.rng }),
       )
       const drawn = weightedPick(eligible, ctx.rng)
-      if (drawn) ctx.state.events.pending.push(toPending(drawn))
+      if (drawn) present(ctx, drawn)
     },
 
     onCommand(command: Command, ctx: SystemCtx): void {

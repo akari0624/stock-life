@@ -25,6 +25,9 @@ export const eventSchema: z.ZodType<EventDef> = z.object({
   // 0 means "never drawn at random" — the event is only reachable through an
   // explicit `event.trigger` (position trials work this way, §7.1).
   weight: z.number().nonnegative(),
+  // §7.2: the situation the player reads before choosing. Optional for now
+  // only so a pack can be filled in gradually — see DESIGN §7.2's note.
+  prompt: z.string().min(1).optional(),
   choices: z
     .array(choiceSchema)
     .length(3)

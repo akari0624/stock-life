@@ -74,6 +74,7 @@ export const marketEvents = [
     id: 'buy_the_dip',
     require: { all: [{ in: ['era.phase', ['crash', 'recession']] }, { '>=': ['capital', 40] }] },
     weight: 12,
+    prompt: '跌了一整年。你認識的人有一半已經不看盤了，而你手上還有現金。',
     choices: [
       { id: 'safe', label: '現金為王', odds: '+30', mag: 1 },
       { id: 'normal', label: '分批進場', odds: '+5', mag: 2 },

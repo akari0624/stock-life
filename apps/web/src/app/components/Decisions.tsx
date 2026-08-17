@@ -49,9 +49,14 @@ export function Decisions({ session, view, decision, finished, onSettle }: Props
       return (
         <section className={cn(CARD, 'p-4')}>
           <header className="mb-3">
-            <h3 className="text-title text-at-text-primary">你要怎麼做</h3>
+            {/* §7.2：情境是玩家做決定的唯一依據，舞台演過一次，這裡再留一份 */}
+            {decision.prompt ? (
+              <p className="text-body text-at-text-primary">{decision.prompt}</p>
+            ) : (
+              <h3 className="text-title text-at-text-primary">你要怎麼做</h3>
+            )}
             {/* 成功率是引擎算好給的那一個數字，擲骰用的就是它（§7.2 所見即所得） */}
-            <p className="text-caption text-at-text-muted">機率就是實際擲骰的數字</p>
+            <p className="text-caption mt-1 text-at-text-muted">機率就是實際擲骰的數字</p>
           </header>
           <div className="flex flex-col gap-2">
             {decision.choices.map((choice) => (

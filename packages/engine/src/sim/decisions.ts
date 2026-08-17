@@ -17,7 +17,7 @@ import {
 // reproducing the same life the moment the two drifted apart.
 
 export type Decision =
-  | { kind: 'event'; eventId: string; choices: PendingChoiceView[] }
+  | { kind: 'event'; eventId: string; prompt?: string; choices: PendingChoiceView[] }
   | { kind: 'trial'; positionId: string; opportunityId: string; choices: readonly TrialChoice[] }
   | { kind: 'dice'; pool: number; channels: readonly DiceChannel[] }
   | { kind: 'offer'; offer: Offer }
@@ -25,7 +25,14 @@ export type Decision =
 /** `undefined` = nothing left to decide; the turn can end. */
 export function nextDecision(view: PlayerView): Decision | undefined {
   const pending = view.events.pending[0]
-  if (pending) return { kind: 'event', eventId: pending.eventId, choices: pending.choices }
+  if (pending) {
+    return {
+      kind: 'event',
+      eventId: pending.eventId,
+      ...(pending.prompt === undefined ? {} : { prompt: pending.prompt }),
+      choices: pending.choices,
+    }
+  }
 
   const trial = view.positions.open.find((position) => position.pendingTrial)
   if (trial) {

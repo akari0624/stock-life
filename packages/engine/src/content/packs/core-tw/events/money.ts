@@ -86,6 +86,7 @@ export const moneyEvents = [
     id: 'parents_need_help',
     require: { '>=': ['age', 32] },
     weight: 11,
+    prompt: '媽在電話裡講了二十分鐘的鄰居近況，最後才說：「你爸的藥有點貴。」',
     choices: [
       { id: 'safe', label: '量力而為', odds: '+20', mag: 1 },
       { id: 'normal', label: '每月固定給', odds: '0', mag: 2 },

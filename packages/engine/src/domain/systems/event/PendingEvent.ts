@@ -14,5 +14,7 @@ export interface PendingChoiceView {
 
 export interface PendingEvent {
   eventId: string
+  /** The situation (§7.2). The stage says it too; the decision panel keeps it in view. */
+  prompt?: string
   choices: PendingChoiceView[]
 }

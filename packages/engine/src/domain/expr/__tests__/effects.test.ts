@@ -54,7 +54,7 @@ describe('applyStateEffect', () => {
     expect(state).toEqual(snapshot)
   })
 
-  it('stat.add accumulates into counters.<key>', () => {
+  it('stat.add accumulates into counters.<key> for keys that are not real stats', () => {
     const state = buildState()
     const next = applyStateEffect(state, { type: 'stat.add', key: 'risky_bets', value: 3 }, rng())
     expect(next.counters['risky_bets']).toBe(3)
@@ -82,14 +82,15 @@ describe('applyStateEffect', () => {
     expect(twice.traits.unlocked).toEqual(['diamond_hands'])
   })
 
-  it('position.open increments positions.count', () => {
+  it('position.open is inert here — PositionSystem is the only thing that opens a position', () => {
     const state = buildState()
     const next = applyStateEffect(
       state,
       { type: 'position.open', opportunityId: 'op-1', sizing: 'heavy' },
       rng(),
     )
-    expect(next.positions.count).toBe(1)
+    expect(next.positions.count).toBe(0)
+    expect(next.positions.open).toEqual([])
   })
 
   it('event.trigger does not throw and does not corrupt state', () => {

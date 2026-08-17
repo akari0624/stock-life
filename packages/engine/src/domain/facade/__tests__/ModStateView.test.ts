@@ -20,7 +20,7 @@ function buildState() {
   state.player.family = { status: 'married', kids: 2 }
   state.career = { id: 'engineer', industry: 'tech', rank: 3 }
   state.era = { phase: 'boom', themes: ['semiconductors'] }
-  state.positions = { count: 2, worstDrawdown: -0.35 }
+  state.positions = { count: 2, worstDrawdown: -0.35, open: [], closed: [] }
   state.flags['burned_by_2000_bubble'] = true
   state.counters['risky_bets_taken'] = 5
   return state

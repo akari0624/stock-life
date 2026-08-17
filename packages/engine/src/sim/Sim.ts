@@ -5,6 +5,7 @@ import { createAdvance, type Advance } from '../domain/turn/advance.js'
 import type { SystemRegistry } from '../domain/systems/SystemRegistry.js'
 import type { Calendar } from '../domain/Calendar.js'
 import type { Effect } from '../domain/expr/effects.js'
+import { toPlayerView, type PlayerView } from '../domain/state/playerView.js'
 
 export interface SimOptions {
   seed: string | number
@@ -49,6 +50,15 @@ export class Sim {
 
   getSnapshot(): SimSnapshot {
     return { state: this.state, version: this.version }
+  }
+
+  /**
+   * What presentation is allowed to read: state with every open position's
+   * resolved `truth` stripped out (§7.1). The UI and the headless policy both
+   * see exactly what a player would.
+   */
+  getPlayerView(): PlayerView {
+    return toPlayerView(this.state)
   }
 
   getCommandLog(): readonly Command[] {

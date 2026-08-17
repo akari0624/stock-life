@@ -1,4 +1,12 @@
 import type { LifeStage } from '../Calendar.js'
+import { cloneOffer, type Offer } from './Offer.js'
+import type { PendingEvent } from '../systems/event/PendingEvent.js'
+import {
+  clonePosition,
+  cloneClosedPosition,
+  type ClosedPosition,
+  type Position,
+} from '../systems/position/Position.js'
 
 // §11 error 3: domain-separated state, not a single 60+ field flat blob.
 // Each slice is owned by the systems that care about it (S6+); this file
@@ -39,13 +47,23 @@ export interface EraState {
 }
 
 export interface PositionsState {
+  /** Kept equal to `open.length` — this is what the facade exposes. */
   count: number
   worstDrawdown: number
+  open: Position[]
+  closed: ClosedPosition[]
 }
 
 export interface TraitsState {
   unlocked: string[]
   removed: string[]
+}
+
+export interface EventsState {
+  /** Event ids waiting to be turned into a decision (from `event.trigger`). */
+  queue: string[]
+  /** Decisions currently in front of the player, oldest first. */
+  pending: PendingEvent[]
 }
 
 export type CountersState = Record<string, number>
@@ -71,6 +89,14 @@ export interface GameState {
   traits: TraitsState
   counters: CountersState
   flags: FlagsState
+  /** Proposals awaiting a player decision this turn (§2: the system proposes). */
+  offers: Offer[]
+  events: EventsState
+  /**
+   * Checkpoints that fired since they were last drained — the bus that makes
+   * §7.5's `checkOn` data-driven instead of hardcoded in the turn flow.
+   */
+  moments: string[]
 }
 
 /**
@@ -90,9 +116,23 @@ export function cloneGameState(state: GameState): GameState {
     capitalState: { ...state.capitalState },
     career: { ...state.career },
     era: { ...state.era, themes: [...state.era.themes] },
-    positions: { ...state.positions },
+    positions: {
+      count: state.positions.count,
+      worstDrawdown: state.positions.worstDrawdown,
+      open: state.positions.open.map(clonePosition),
+      closed: state.positions.closed.map(cloneClosedPosition),
+    },
     traits: { unlocked: [...state.traits.unlocked], removed: [...state.traits.removed] },
     counters: { ...state.counters },
     flags: { ...state.flags },
+    offers: state.offers.map(cloneOffer),
+    events: {
+      queue: [...state.events.queue],
+      pending: state.events.pending.map((e) => ({
+        ...e,
+        choices: e.choices.map((c) => ({ ...c })),
+      })),
+    },
+    moments: [...state.moments],
   }
 }

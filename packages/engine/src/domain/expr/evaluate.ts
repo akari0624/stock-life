@@ -101,3 +101,14 @@ export function evaluate(expr: Expr, ctx: EvalContext): EvaluateResult {
     throw err
   }
 }
+
+/**
+ * The gate systems actually use: "does this content's `require` pass right
+ * now?". A tree that blows the step limit is treated as unsatisfied — a
+ * broken condition must never hand out an offer or fire an event, and it
+ * must never take the turn down (TODO.md #2).
+ */
+export function isSatisfied(expr: Expr, ctx: EvalContext): boolean {
+  const result = evaluate(expr, ctx)
+  return result.ok && result.value
+}

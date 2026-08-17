@@ -1,5 +1,6 @@
 import type { GameState } from '../state/GameState.js'
 import { cloneGameState } from '../state/GameState.js'
+import { addStat } from '../state/stats.js'
 import type { RngStream } from '../rng/SeededRng.js'
 
 // §6.3: Effect splits into two unions that must never blend. StateEffect is
@@ -27,6 +28,18 @@ export type SceneHint =
 
 export type Effect = StateEffect | SceneHint
 
+/**
+ * The `scene` block content attaches to an opportunity/event/trait — a bag of
+ * asset ids the director turns into SceneHints. Ids only: AssetResolver
+ * (S14) decides what a missing one falls back to (§6.3).
+ */
+export interface SceneRef {
+  bg?: string
+  actor?: string
+  sfx?: string
+  fx?: string
+}
+
 const STATE_EFFECT_TYPES = new Set<StateEffect['type']>([
   'stat.add',
   'capital.mul',
@@ -48,18 +61,20 @@ export function isSceneHint(effect: Effect): effect is SceneHint {
  * Applies one StateEffect to state, purely: returns a new GameState and
  * never mutates the one passed in.
  *
- * `position.open` only bumps the summary count here — per-position trial
- * tracking (tier: "life", drawdowns, leverage default chains) is S9's
- * system to build. `event.trigger` is a no-op on state: the turn scheduler
- * (S6) reads it out of the returned effects[] and hands it to EventSystem
- * (S10) directly, so nothing needs to be queued in GameState itself yet.
+ * `position.open` and `event.trigger` are inert here on purpose. Opening a
+ * position needs the calendar, the era and an rng stream to resolve `truth`
+ * against (§7.1), so PositionSystem is its single owner — a second writer
+ * that only bumped `positions.count` would leave the count disagreeing with
+ * the list. Likewise a triggered event is resolved by EventSystem, which
+ * routes content-authored effects of both kinds back to the owning system.
  */
 export function applyStateEffect(state: GameState, effect: StateEffect, _rng: RngStream): GameState {
   const next = cloneGameState(state)
 
   switch (effect.type) {
     case 'stat.add':
-      next.counters[effect.key] = (next.counters[effect.key] ?? 0) + effect.value
+      // A known stat name moves that stat; anything else is a counter (§7.5).
+      addStat(next, effect.key, effect.value)
       return next
     case 'capital.mul':
       next.capitalState.capital *= effect.value
@@ -73,7 +88,6 @@ export function applyStateEffect(state: GameState, effect: StateEffect, _rng: Rn
       }
       return next
     case 'position.open':
-      next.positions.count += 1
       return next
     case 'event.trigger':
       return next

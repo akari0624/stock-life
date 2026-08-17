@@ -32,9 +32,11 @@ describe('mergeContentPacks', () => {
     if (!coreResult.ok || !extraResult.ok) throw new Error('fixture packs failed to load')
 
     const { content } = mergeContentPacks([coreResult.pack, extraResult.pack])
-    expect(content.events).toHaveLength(3)
-    expect(content.opportunities).toHaveLength(1)
-    expect(content.traits).toHaveLength(1)
+    expect(content.events).toHaveLength(coreResult.pack.events.length + extraResult.pack.events.length)
+    expect(content.opportunities).toHaveLength(
+      coreResult.pack.opportunities.length + extraResult.pack.opportunities.length,
+    )
+    expect(content.traits).toHaveLength(coreResult.pack.traits.length + extraResult.pack.traits.length)
     expect(content.careerGraph.nodes.map((n) => n.id)).toEqual(
       expect.arrayContaining(['engineer_junior', 'engineer_senior', 'extra-pack-node']),
     )

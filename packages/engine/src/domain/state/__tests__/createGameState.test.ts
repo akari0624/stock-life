@@ -24,7 +24,8 @@ describe('createInitialGameState', () => {
       cognition: 0,
       network: 0,
     })
-    expect(state.positions).toEqual({ count: 0, worstDrawdown: 0 })
+    expect(state.positions).toEqual({ count: 0, worstDrawdown: 0, open: [], closed: [] })
+    expect(state.offers).toEqual([])
     expect(state.traits).toEqual({ unlocked: [], removed: [] })
     expect(state.counters).toEqual({})
     expect(state.flags).toEqual({})

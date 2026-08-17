@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`runLife > is a golden test: seed + fingerprint + commandLog reproduce the same settlement 1`] = `
+{
+  "capital": 1074.6000000000001,
+  "careerId": "engineer_senior",
+  "careerRank": 2,
+  "cognition": 149,
+  "commandCount": 140,
+  "debt": 0,
+  "finalAge": 65,
+  "finalYear": 2037,
+  "fingerprint": 7300035399854156,
+  "income": 162,
+  "leveragedWipeouts": 0,
+  "name": "Player",
+  "nerve": 100,
+  "netWorth": 1074.6000000000001,
+  "network": 65,
+  "opportunitiesDeclined": 0,
+  "opportunitiesSeen": 0,
+  "opportunitiesTaken": 0,
+  "outcome": "comfortable",
+  "positionsClosed": 0,
+  "positionsRuined": 0,
+  "removedTraits": [],
+  "seed": "golden-seed",
+  "traits": [],
+}
+`;

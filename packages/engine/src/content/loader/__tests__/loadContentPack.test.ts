@@ -35,10 +35,13 @@ describe('loadContentPack', () => {
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.pack.manifest.id).toBe('core-tw')
-      expect(result.pack.events).toHaveLength(3)
-      expect(result.pack.opportunities).toHaveLength(1)
-      expect(result.pack.careerGraph.nodes).toHaveLength(2)
-      expect(result.pack.traits).toHaveLength(1)
+      // Asserted against the manifest rather than a literal, so growing the
+      // pack can't silently drift from what it advertises (§6.4).
+      const { provides } = result.pack.manifest
+      expect(result.pack.events).toHaveLength(provides.events)
+      expect(result.pack.opportunities).toHaveLength(provides.opportunities)
+      expect(result.pack.careerGraph.nodes).toHaveLength(provides.careers)
+      expect(result.pack.traits).toHaveLength(provides.traits)
     }
   })
 

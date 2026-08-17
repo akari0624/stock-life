@@ -67,12 +67,21 @@ export function TitleScreen() {
             >
               隨機世界
             </button>
-            {/* history 是 S19 的 tw-history 產生器，先擺著佔位 */}
-            <button type="button" className={BUTTON} disabled title="S19 才會有">
-              台股歷史（尚未開放）
+            <button
+              type="button"
+              className={cn(BUTTON, settings.worldMode === 'history' && BUTTON_ACTIVE)}
+              onClick={() => store.setSettings({ worldMode: 'history' })}
+            >
+              台股歷史
             </button>
           </div>
         </div>
+
+        <p className="text-caption -mt-2 text-at-text-muted">
+          {settings.worldMode === 'history'
+            ? '真實的時代骨架：1990 萬點、2000 網路泡沫、2008 海嘯、2020 疫情、2025 AI。崩盤在該來的年份來，但機會找不找得上你仍然看種子。'
+            : '程序生成的時代：大約 8–12 年一次大崩、5–8 年一波主題。每個種子都是一個沒人活過的世界。'}
+        </p>
 
         <div>
           <label className={LABEL} htmlFor="seed">

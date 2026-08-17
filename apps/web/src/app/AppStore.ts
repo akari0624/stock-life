@@ -56,6 +56,12 @@ export interface AppSnapshot {
 
 export const START_YEARS = [1990, 2000, 2010] as const
 
+/** 畫面上的兩種世界 → §7.4 註冊表裡的 id。 */
+export const WORLD_GENERATOR_IDS: Record<WorldMode, string> = {
+  random: 'random',
+  history: 'tw-history',
+}
+
 const DEFAULT_SETTINGS: TitleSettings = {
   name: '無名氏',
   startYear: 1990,
@@ -219,6 +225,7 @@ export class AppStore {
       sources: this.sources,
       name: settings.name.trim() || DEFAULT_SETTINGS.name,
       startYear: settings.startYear,
+      worldGeneratorId: WORLD_GENERATOR_IDS[settings.worldMode],
     })
 
     if (!created.ok) {

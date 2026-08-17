@@ -1,4 +1,5 @@
 import type { GameSystem, Phase, SystemCtx } from '../GameSystem.js'
+import type { GameState } from '../../state/GameState.js'
 import type { Command } from '../../turn/Command.js'
 import type { FacadeField } from '../../facade/FacadeField.js'
 import type { RngStream } from '../../rng/SeededRng.js'
@@ -65,15 +66,25 @@ const EVENT_FACADE_FIELDS: readonly FacadeField[] = [
   { path: `counter.${counterForEventChoice('bold')}`, label: 'Times the bold option was taken', type: 'number' },
 ]
 
+/**
+ * Puts an event id in the inbox EventSystem drains each turn.
+ *
+ * Exported because there are two callers and they must not diverge: content's
+ * `event.trigger` effect (§6.3) and PositionSystem's yearly trial (§7.1 —
+ * "trials 走一般事件管線"). Emitting the effect is how the *performance* hears
+ * about it; this is how the *game* does.
+ */
+export function enqueueEvent(state: GameState, eventId: string): void {
+  state.events.queue.push(eventId)
+}
+
 export function createEventSystem(options: EventSystemOptions): GameSystem {
   const byId = new Map(options.events.map((e) => [e.id, e]))
 
   const effectDeps: ContentEffectDeps = {
     opportunities: options.opportunities,
     position: options.position,
-    enqueueEvent: (ctx, eventId) => {
-      ctx.state.events.queue.push(eventId)
-    },
+    enqueueEvent: (ctx, eventId) => enqueueEvent(ctx.state, eventId),
   }
 
   const resolve = (ctx: SystemCtx, pending: PendingEvent, choiceId: string): void => {

@@ -96,15 +96,20 @@ function hasKeyDeep(value: unknown, key: string): boolean {
   return false
 }
 
-/** Advances turns until an opportunity offer shows up (or gives up). */
+/**
+ * Advances turns until an opportunity offer shows up. The loop is generous
+ * because how often one arrives is a **tuned** number (S19 lowered it once the
+ * pack had 24 opportunities instead of 1) — this test is about what an offer
+ * looks like when it comes, not about how long the wait is.
+ */
 function runUntilOffer(seedSuffix = '', options: SetupOptions = {}) {
   const ctx = setup({ seed: `offer${seedSuffix}`, ...options })
   let current = ctx.state
-  for (let turn = 0; turn < 60; turn++) {
+  for (let turn = 0; turn < 400; turn++) {
     current = ctx.advance(current, { type: 'advanceTurn' }, ctx.rng).nextState
-    if (current.offers.some((o) => o.source === 'opportunity')) break
+    if (current.offers.some((o) => o.source === 'opportunity')) return { ...ctx, state: current }
   }
-  return { ...ctx, state: current }
+  throw new Error('no opportunity was ever proposed — check sourceChance()')
 }
 
 describe('signal tiers (§1.2)', () => {
@@ -262,6 +267,28 @@ describe('positions (§1.3, §7.1)', () => {
     expect(triggered).toEqual([])
     expect(current.positions.closed).toHaveLength(1)
     expect(current.positions.count).toBe(0)
+  })
+
+  it('a trial reaches the player as an ordinary event, not just as an effect (§7.1)', () => {
+    // The trial arrives on the event pipeline: PositionSystem puts the id in
+    // the inbox and EventSystem turns it into a pending decision. Emitting the
+    // effect alone would tell the *performance* about a trial the player never
+    // gets to answer — which is exactly what S19's fuller content exposed.
+    const found = runUntilOffer('-trial-event')
+    let current = found.advance(
+      found.state,
+      { type: 'takeOpportunity', id: offerIdFor(LIFE_OPPORTUNITY.id), sizing: 'normal' },
+      found.rng,
+    ).nextState
+
+    for (let turn = 0; turn < 12; turn++) {
+      current = found.advance(current, { type: 'advanceTurn' }, found.rng).nextState
+      if (current.events.queue.length > 0 || current.events.pending.length > 0) break
+    }
+
+    const queued = [...current.events.queue, ...current.events.pending.map((p) => p.eventId)]
+    expect(queued.length).toBeGreaterThan(0)
+    expect(LIFE_OPPORTUNITY.trials).toContain(queued[0])
   })
 
   it('treats an unanswered trial as holding, and a sell as panic selling', () => {

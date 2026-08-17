@@ -83,9 +83,14 @@
 
 ### 5a · 視覺邊界（S14 交付）
 
-- [ ] `AssetResolver` 存在，所有視覺資源**只透過 id 引用**，不得硬編碼路徑
-- [ ] 每種型別都有 fallback：角色→名字色塊、背景→漸層、FX→CSS 動畫
-- [ ] `SceneHint` 與 `StateEffect` 已分離（`DESIGN.md` §6.3）；補素材不需動 `domain/`
+- [x] `AssetResolver` 存在，所有視覺資源**只透過 id 引用**，不得硬編碼路徑
+      → S14 交付。路徑只能來自內容包 manifest 的 `assets` 區塊，且有一個測試
+      掃 `presentation/` 的原始碼擋掉檔名字面量與寫死的 `url()`
+- [x] 每種型別都有 fallback：角色→名字色塊、背景→漸層、FX→CSS 動畫
+      → fallback 的變化（色相、選哪個動畫）由 **id 的雜湊**決定，不碰 `SeededRng`
+- [x] `SceneHint` 與 `StateEffect` 已分離（`DESIGN.md` §6.3）；補素材不需動 `domain/`
+      → 測試證明：同一份 `core-tw`，manifest 空的時候全部 fallback，
+      塞一張圖進去就改用真圖，`domain/` 零改動
 - [x] director 支援 skip / 速度倍率，且**演出長度不影響模擬結果**
       → S13 交付。`play/pause/rate/seek/finish`，並用真的跑完一局
       （跳過 vs 播完 vs 完全不演）比對最終 state 相同

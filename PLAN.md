@@ -22,7 +22,7 @@
 
 | Step | 名稱 | 狀態 | 交接筆記 |
 |---|---|---|---|
-| S1 | Workspace 地基與強制機制 | [ ] | |
+| S1 | Workspace 地基與強制機制 | [x] | pnpm workspace + Turborepo 完成；boundary.test.ts 用 `'window' in globalThis` 而非 `typeof window`，因 engine tsconfig 無 DOM lib 會讓後者型別報錯；apps/web/vite.config.ts 用 resolve.alias 將 `@stock-life/engine` 指向 `packages/engine/src`，讓 Vite 直接消費 TS 原始碼，不需 pre-build；apps/web/vitest.config.ts 設 `passWithNoTests: true`，S1 無 web 測試亦能通過 |
 | S2 | SeededRng 與種子編碼 | [ ] | |
 | S3 | GameState、ModStateView、Calendar | [ ] | |
 | S4 | Expr 求值器與 Effect 系統 | [ ] | |

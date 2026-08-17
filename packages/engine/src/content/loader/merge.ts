@@ -1,5 +1,5 @@
 import { computeFingerprint } from './fingerprint.js'
-import type { LoadedContentPack } from './loadContentPack.js'
+import type { ContentValidationIssue, LoadedContentPack } from './loadContentPack.js'
 import type { Opportunity } from '../schema/opportunity.js'
 import type { Event } from '../schema/event.js'
 import type { CareerGraph } from '../schema/career.js'
@@ -24,6 +24,36 @@ export interface MergeResult {
   content: MergedContent
   /** Feeds directly into the seed's share code (§5.1). */
   fingerprint: number
+}
+
+/**
+ * Rules that only make sense once every pack is on the table (S18).
+ *
+ * A single pack is allowed to be a fragment — only events, or an edge into a
+ * node another pack authored. What the *game* needs is a complete graph, so
+ * that is checked here, against the combination the player actually loaded.
+ */
+export function validateMergedContent(content: MergedContent): ContentValidationIssue[] {
+  const issues: ContentValidationIssue[] = []
+
+  if (content.careerGraph.nodes.length === 0) {
+    issues.push({ section: 'careerGraph', path: ['nodes'], message: '這組內容包沒有任何職涯節點，開不了局' })
+  }
+
+  const ids = new Set(content.careerGraph.nodes.map((node) => node.id))
+  content.careerGraph.edges.forEach((edge, index) => {
+    for (const end of ['from', 'to'] as const) {
+      if (!ids.has(edge[end])) {
+        issues.push({
+          section: 'careerGraph',
+          path: ['edges', index, end],
+          message: `職涯轉換指向不存在的節點「${edge[end]}」（是不是少載入了它所屬的內容包？）`,
+        })
+      }
+    }
+  })
+
+  return issues
 }
 
 /** Combines already-validated packs into one content set + its fingerprint. */

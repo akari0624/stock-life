@@ -166,14 +166,17 @@ describe('loadContentPack', () => {
     }
   })
 
-  it('rejects a career graph edge pointing at a nonexistent node', async () => {
+  it('accepts a pack whose career edge points outside itself — that is a merge-time question (S18)', async () => {
+    // A mod that adds a branch off core-tw's graph names a node it did not
+    // author. Rejecting that per-pack would make such a mod impossible;
+    // `validateMergedContent()` checks the assembled graph instead.
     const raw = emptyRawPack({
       careerGraph: {
         nodes: [{ id: 'n1', industry: 'tech', rank: 1, income: [1, 2] }],
-        edges: [{ from: 'n1', to: 'ghost', require: { chance: 1 }, surfacedAs: 'opportunity' }],
+        edges: [{ from: 'n1', to: 'from_another_pack', require: { chance: 1 }, surfacedAs: 'opportunity' }],
       },
     })
     const result = await loadContentPack(new MemorySource('bad', raw))
-    expect(result.ok).toBe(false)
+    expect(result.ok).toBe(true)
   })
 })

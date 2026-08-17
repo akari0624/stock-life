@@ -103,6 +103,22 @@ export { exportContentJSONSchemas } from './content/schema/toJSONSchema.js'
 export type { ContentSource, RawContentPack } from './content/loader/ContentSource.js'
 export { MemorySource } from './content/loader/MemorySource.js'
 export {
+  PasteSource,
+  FileSource,
+  normalizePackFile,
+  serializePackFile,
+  DEFAULT_MAX_PACK_BYTES,
+  type ContentPackFile,
+  type PasteSourceOptions,
+  type ReadableFile,
+} from './content/loader/PasteSource.js'
+export {
+  checkTrust,
+  DEFAULT_TRUST_POLICY,
+  type ContentTrustPolicy,
+  type TrustIssue,
+} from './content/loader/trust.js'
+export {
   ENGINE_API_VERSION,
   checkCompatibility,
   type CompatibilityIssue,
@@ -111,10 +127,16 @@ export {
   loadContentPack,
   type LoadedContentPack,
   type LoadResult,
+  type LoadOptions,
   type ContentValidationIssue,
   type ContentValidationSection,
 } from './content/loader/loadContentPack.js'
-export { mergeContentPacks, type MergedContent, type MergeResult } from './content/loader/merge.js'
+export {
+  mergeContentPacks,
+  validateMergedContent,
+  type MergedContent,
+  type MergeResult,
+} from './content/loader/merge.js'
 export { createCoreTwSource } from './content/packs/core-tw/index.js'
 
 export type { GameSystem, SystemCtx, Phase } from './domain/systems/GameSystem.js'

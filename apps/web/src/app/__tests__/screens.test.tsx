@@ -62,12 +62,14 @@ describe('畫面', () => {
     session.dispose()
   })
 
-  it('內容包畫面列出已載入的 core-tw', async () => {
+  it('內容包畫面列出已載入的 core-tw，並提供匯入／匯出入口', async () => {
     const { store, session } = await startedStore()
     const markup = render(store, <PacksScreen />)
 
     expect(markup).toContain('core-tw')
-    expect(markup).toContain('S18')
+    expect(markup).toContain('匯入貼上的內容')
+    expect(markup).toContain('下載官方 JSON Schema')
+    expect(markup).toContain('type="file"')
     session.dispose()
   })
 

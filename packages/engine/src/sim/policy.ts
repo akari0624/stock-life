@@ -2,7 +2,8 @@ import type { Command } from '../domain/turn/Command.js'
 import type { PlayerView } from '../domain/state/playerView.js'
 import type { Sizing } from '../domain/expr/effects.js'
 import type { EventChoiceId } from '../domain/systems/event/EventDef.js'
-import { DICE_CHANNELS, COUNTER_DICE_POOL, COUNTER_DICE_SPENT, type DiceChannel } from '../domain/systems/economy/DiceSystem.js'
+import { DICE_CHANNELS, type DiceChannel } from '../domain/systems/economy/DiceSystem.js'
+import { nextDecision } from './decisions.js'
 
 // A policy stands in for the player: given what a player could see, it
 // returns the next decision, or undefined to end the turn. It only ever gets
@@ -66,25 +67,24 @@ export function defaultPolicy(options: DefaultPolicyOptions = {}): Policy {
   const weights = { ...EVEN_SPLIT, ...options.diceWeights }
 
   return ({ view }: PolicyContext): Command | undefined => {
-    const pending = view.events.pending[0]
-    if (pending) return { type: 'resolveEvent', choice: risk }
+    // Same derivation the UI uses (S16) — see decisions.ts for why that matters.
+    const decision = nextDecision(view)
+    if (!decision) return undefined
 
-    const trialPosition = view.positions.open.find((p) => p.pendingTrial)
-    if (trialPosition) {
-      return { type: 'resolveTrial', positionId: trialPosition.id, choice: holds ? 'hold' : 'sell' }
+    switch (decision.kind) {
+      case 'event':
+        return { type: 'resolveEvent', choice: risk }
+      case 'trial':
+        return { type: 'resolveTrial', positionId: decision.positionId, choice: holds ? 'hold' : 'sell' }
+      case 'dice':
+        return { type: 'allocateDice', assignment: splitDice(decision.pool, weights) }
+      case 'offer': {
+        const offer = decision.offer
+        const wanted = offer.source === 'career' ? takesCareerMoves : takesOpportunities
+        if (!wanted) return { type: 'declineOpportunity', id: offer.id }
+        const size = offer.sizing.includes(sizing) ? sizing : (offer.sizing[0] as Sizing)
+        return { type: 'takeOpportunity', id: offer.id, sizing: size }
+      }
     }
-
-    const remaining = (view.counters[COUNTER_DICE_POOL] ?? 0) - (view.counters[COUNTER_DICE_SPENT] ?? 0)
-    if (remaining > 0) return { type: 'allocateDice', assignment: splitDice(remaining, weights) }
-
-    const offer = view.offers[0]
-    if (offer) {
-      const wanted = offer.source === 'career' ? takesCareerMoves : takesOpportunities
-      if (!wanted) return { type: 'declineOpportunity', id: offer.id }
-      const size = offer.sizing.includes(sizing) ? sizing : (offer.sizing[0] as Sizing)
-      return { type: 'takeOpportunity', id: offer.id, sizing: size }
-    }
-
-    return undefined
   }
 }

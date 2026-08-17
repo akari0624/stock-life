@@ -49,6 +49,7 @@ const friendPack = (id = 'friend-pack', version = '1.0.0') =>
         id: 'friend_event',
         require: { '>=': ['age', 18] },
         weight: 999, // 蓋過官方事件，讓它在測試裡幾乎一定被抽到
+        prompt: '朋友的內容包出了一件事。',
         choices: [
           { id: 'safe', label: '朋友的選項 A', odds: '+10', mag: 1 },
           { id: 'normal', label: '朋友的選項 B', odds: '0', mag: 2 },

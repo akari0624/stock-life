@@ -11,6 +11,7 @@ export const eraEvents = [
     id: 'everyone_is_talking_stocks',
     require: { all: [{ '==': ['era.phase', 'mania'] }, { '>=': ['age', 20] }] },
     weight: 14,
+    prompt: '早餐店的電視在報收盤，隔壁桌兩個人在比誰賺得多。',
     choices: [
       { id: 'safe', label: '聽聽就算了', odds: '+30', mag: 1 },
       { id: 'normal', label: '跟著開個戶', odds: '-5', mag: 2 },
@@ -36,6 +37,7 @@ export const eraEvents = [
     id: 'index_at_the_ceiling',
     require: { all: [{ '==': ['era.phase', 'mania'] }, { '>=': ['capital', 60] }] },
     weight: 11,
+    prompt: '指數又創新高。帳戶上的數字大到你自己都覺得不真實。',
     choices: [
       { id: 'safe', label: '獲利了結一半', odds: '+30', mag: 2 },
       { id: 'normal', label: '設個停利點', odds: '+5', mag: 2 },
@@ -61,6 +63,7 @@ export const eraEvents = [
     id: 'the_crash_year',
     require: { '==': ['era.phase', 'crash'] },
     weight: 16,
+    prompt: '一開盤就是一片綠。新聞用的字是「崩」。',
     choices: [
       { id: 'safe', label: '不看盤，照常上班', odds: '+25', mag: 2 },
       { id: 'normal', label: '調整部位', odds: '0', mag: 2 },
@@ -87,6 +90,7 @@ export const eraEvents = [
     id: 'neighbour_jumped_in',
     require: { all: [{ in: ['era.phase', ['boom', 'mania']] }, { '>=': ['network', 12] }] },
     weight: 10,
+    prompt: '鄰居換了車，說最近運氣好，順便告訴你他買了什麼。',
     choices: [
       { id: 'safe', label: '祝福他', odds: '+30', mag: 1 },
       { id: 'normal', label: '問問他買什麼', odds: '-5', mag: 2 },
@@ -112,6 +116,7 @@ export const eraEvents = [
     id: 'the_quiet_bottom',
     require: { all: [{ '==': ['era.phase', 'recession'] }, { '>=': ['age', 25] }] },
     weight: 12,
+    prompt: '已經沒有人在講股票了。財經版縮到三分之一頁。',
     choices: [
       { id: 'safe', label: '先把工作顧好', odds: '+25', mag: 2 },
       { id: 'normal', label: '固定小額買進', odds: '+10', mag: 2 },
@@ -134,6 +139,7 @@ export const eraEvents = [
     id: 'currency_shock',
     require: { all: [{ in: ['era.phase', ['crash', 'recession']] }, { '>=': ['capital', 60] }] },
     weight: 9,
+    prompt: '匯率一週跳了三塊。銀行門口排起了隊。',
     choices: [
       { id: 'safe', label: '什麼都不換', odds: '+25', mag: 2 },
       { id: 'normal', label: '換一點外幣', odds: '0', mag: 2 },
@@ -153,6 +159,7 @@ export const eraEvents = [
     id: 'property_fever',
     require: { all: [{ in: ['era.phase', ['boom', 'mania']] }, { '>=': ['age', 30] }, { '>=': ['capital', 150] }, { not: { flag: 'once_property_fever' } }] },
     weight: 9,
+    prompt: '同一個社區，去年開的價和今年開的價差了兩成。',
     choices: [
       { id: 'safe', label: '自住就好', odds: '+25', mag: 2 },
       { id: 'normal', label: '買一間收租', odds: '0', mag: 3 },
@@ -180,6 +187,7 @@ export const eraEvents = [
     id: 'new_industry_hype',
     require: { all: [{ '==': ['era.phase', 'boom'] }, { '>=': ['cognition', 20] }] },
     weight: 11,
+    prompt: '每一場說明會都在講同一個名詞，而你還說不清楚它是什麼。',
     choices: [
       { id: 'safe', label: '等它成熟再說', odds: '+30', mag: 1 },
       { id: 'normal', label: '花時間搞懂它', odds: '0', mag: 2 },
@@ -203,6 +211,7 @@ export const eraEvents = [
     id: 'export_orders_boom',
     require: { all: [{ '==': ['era.phase', 'boom'] }, { in: ['career.industry', ['factory', 'trade', 'tech']] }] },
     weight: 10,
+    prompt: '客戶把明年的量先押下來了，問你們接不接得完。',
     choices: [
       { id: 'safe', label: '照常出貨', odds: '+25', mag: 2 },
       { id: 'normal', label: '加開一條線', odds: '0', mag: 2 },
@@ -228,6 +237,7 @@ export const eraEvents = [
     id: 'salary_frozen',
     require: { all: [{ in: ['era.phase', ['recession', 'crash']] }, { '>=': ['career.rank', 1] }] },
     weight: 13,
+    prompt: '公告貼在茶水間：今年調薪凍結，年終看下半年。',
     choices: [
       { id: 'safe', label: '忍過去', odds: '+25', mag: 2 },
       { id: 'normal', label: '談談看', odds: '0', mag: 2 },
@@ -253,6 +263,7 @@ export const eraEvents = [
     id: 'recovery_hiring',
     require: { all: [{ '==': ['era.phase', 'recovery'] }, { '>=': ['career.rank', 1] }] },
     weight: 11,
+    prompt: '獵人頭又開始打電話了，開的價比去年高。',
     choices: [
       { id: 'safe', label: '留在原地', odds: '+20', mag: 1 },
       { id: 'normal', label: '看看外面', odds: '+5', mag: 2 },
@@ -275,6 +286,7 @@ export const eraEvents = [
     id: 'the_ipo_queue',
     require: { all: [{ in: ['era.phase', ['boom', 'mania']] }, { '>=': ['capital', 50] }] },
     weight: 9,
+    prompt: '承銷公告出來了，抽籤要在三天內圈存。',
     choices: [
       { id: 'safe', label: '不抽', odds: '+25', mag: 1 },
       { id: 'normal', label: '抽一張看看', odds: '0', mag: 2 },
@@ -300,6 +312,7 @@ export const eraEvents = [
     id: 'the_island_moves_on',
     require: { all: [{ '>=': ['age', 40] }, { '==': ['era.phase', 'recovery'] }] },
     weight: 8,
+    prompt: '你做了二十年的東西，現在被歸在「傳統產業」那一欄。',
     choices: [
       { id: 'safe', label: '守住現在會的', odds: '+20', mag: 1 },
       { id: 'normal', label: '學一點新東西', odds: '+5', mag: 2 },
@@ -325,6 +338,7 @@ export const eraEvents = [
     id: 'blackout_of_information',
     require: { all: [{ '==': ['era.phase', 'crash'] }, { '>=': ['network', 20] }] },
     weight: 8,
+    prompt: '同一件事你聽到三個版本，每個講的人都拍胸脯。',
     choices: [
       { id: 'safe', label: '只看公開資訊', odds: '+25', mag: 2 },
       { id: 'normal', label: '打幾通電話問問', odds: '0', mag: 2 },
@@ -350,6 +364,7 @@ export const eraEvents = [
     id: 'the_last_bull',
     require: { all: [{ '>=': ['age', 55] }, { in: ['era.phase', ['boom', 'mania']] }] },
     weight: 10,
+    prompt: '這一波你看得很清楚。你也清楚自己還剩幾年可以再來一次。',
     choices: [
       { id: 'safe', label: '這把不玩了', odds: '+30', mag: 2 },
       { id: 'normal', label: '小部位參與', odds: '+5', mag: 2 },
@@ -375,6 +390,7 @@ export const eraEvents = [
     id: 'kids_ask_about_money',
     require: { all: [{ flag: 'has_kids' }, { '>=': ['age', 45] }] },
     weight: 8,
+    prompt: '孩子問你「我們家算有錢嗎」，接著問「那要怎麼變有錢」。',
     choices: [
       { id: 'safe', label: '叫他好好念書', odds: '+20', mag: 1 },
       { id: 'normal', label: '講講自己的經驗', odds: '+5', mag: 2 },

@@ -11,6 +11,7 @@ export const lifeEvents = [
     id: 'meet_someone',
     require: { all: [{ '>=': ['age', 24] }, { '<=': ['age', 40] }, { not: { flag: 'partnered' } }] },
     weight: 11,
+    prompt: '有個人問你週末有沒有空。你已經很久沒有被這樣問過。',
     choices: [
       { id: 'safe', label: '慢慢來', odds: '+20', mag: 1 },
       { id: 'normal', label: '認真交往', odds: '+5', mag: 2 },
@@ -33,6 +34,7 @@ export const lifeEvents = [
     id: 'have_a_child',
     require: { all: [{ flag: 'partnered' }, { '>=': ['age', 27] }, { '<=': ['age', 44] }, { not: { flag: 'has_kids' } }] },
     weight: 10,
+    prompt: '你們在客廳坐到很晚，話題繞來繞去都繞回同一件事。',
     choices: [
       { id: 'safe', label: '再等等', odds: '+20', mag: 1 },
       { id: 'normal', label: '順其自然', odds: '0', mag: 2 },
@@ -60,6 +62,7 @@ export const lifeEvents = [
     id: 'partner_career_clash',
     require: { all: [{ flag: 'partnered' }, { '>=': ['age', 30] }] },
     weight: 8,
+    prompt: '兩邊的工作剛好在這一年撞在一起，總得有人退一步。',
     choices: [
       { id: 'safe', label: '我退一步', odds: '+15', mag: 2 },
       { id: 'normal', label: '各自安排', odds: '0', mag: 2 },
@@ -82,6 +85,7 @@ export const lifeEvents = [
     id: 'old_friends_dinner',
     require: { all: [{ '>=': ['age', 30] }, { not: { flag: 'once_old_friends_dinner' } }] },
     weight: 9,
+    prompt: '群組突然響起來，說十年沒見了，要不要約。',
     choices: [
       { id: 'safe', label: '推掉', odds: '+20', mag: 1 },
       { id: 'normal', label: '去坐一下', odds: '+5', mag: 2 },
@@ -105,6 +109,7 @@ export const lifeEvents = [
     id: 'health_check',
     require: { '>=': ['age', 35] },
     weight: 10,
+    prompt: '健檢通知單在桌上放了兩個月，上面的日期快過期了。',
     choices: [
       { id: 'safe', label: '每年都做', odds: '+30', mag: 2 },
       { id: 'normal', label: '公司安排就做', odds: '0', mag: 2 },
@@ -127,6 +132,7 @@ export const lifeEvents = [
     id: 'exercise_habit',
     require: { '>=': ['age', 25] },
     weight: 8,
+    prompt: '爬四層樓要停一次。你以前不會這樣。',
     choices: [
       { id: 'safe', label: '走路上下班', odds: '+30', mag: 2 },
       { id: 'normal', label: '週末動一動', odds: '+10', mag: 2 },
@@ -149,6 +155,7 @@ export const lifeEvents = [
     id: 'debt_collector_call',
     require: { flag: 'leveraged_wipeout' },
     weight: 16,
+    prompt: '一天三通電話，最後一通打到公司總機。',
     choices: [
       { id: 'safe', label: '面對它，談分期', odds: '+20', mag: 2 },
       { id: 'normal', label: '先躲一陣子', odds: '-10', mag: 2 },
@@ -175,6 +182,7 @@ export const lifeEvents = [
     id: 'health_scare',
     require: { all: [{ flag: 'leveraged_wipeout' }, { '<=': ['nerve', 55] }] },
     weight: 12,
+    prompt: '半夜胸口悶了一下，過幾分鐘就好了。你躺著，沒有再睡著。',
     choices: [
       { id: 'safe', label: '立刻停下來休養', odds: '+25', mag: 2 },
       { id: 'normal', label: '減量但不停', odds: '-5', mag: 2 },
@@ -198,6 +206,7 @@ export const lifeEvents = [
     id: 'family_blames_you',
     require: { all: [{ '>=': ['counter.family_strain', 2] }, { '>=': ['age', 35] }] },
     weight: 11,
+    prompt: '過年的桌上，有人把當初那件事又提了一次，這次沒有笑。',
     choices: [
       { id: 'safe', label: '道歉並改變', odds: '+20', mag: 2 },
       { id: 'normal', label: '解釋當初的理由', odds: '-5', mag: 2 },
@@ -220,6 +229,7 @@ export const lifeEvents = [
     id: 'volunteer',
     require: { all: [{ '>=': ['age', 30] }, { '>=': ['nerve', 55] }] },
     weight: 6,
+    prompt: '社區在募志工，時段剛好是你每週唯一空著的那個晚上。',
     choices: [
       { id: 'safe', label: '捐點錢', odds: '+30', mag: 2 },
       { id: 'normal', label: '偶爾去幫忙', odds: '+5', mag: 2 },
@@ -243,6 +253,7 @@ export const lifeEvents = [
     id: 'hobby_years',
     require: { '>=': ['age', 26] },
     weight: 7,
+    prompt: '你在櫃子深處翻到一樣東西，是很多年前你很喜歡的。',
     choices: [
       { id: 'safe', label: '沒空', odds: '+15', mag: 1 },
       { id: 'normal', label: '一週留兩小時', odds: '+10', mag: 2 },
@@ -265,6 +276,7 @@ export const lifeEvents = [
     id: 'move_back_home',
     require: { all: [{ '>=': ['age', 45] }, { '<=': ['capital', 150] }] },
     weight: 8,
+    prompt: '房租又要漲了。老家那間空房其實一直留著。',
     choices: [
       { id: 'safe', label: '搬回去住', odds: '+25', mag: 2 },
       { id: 'normal', label: '換小一點的房子', odds: '+5', mag: 2 },
@@ -290,6 +302,7 @@ export const lifeEvents = [
     id: 'funeral',
     require: { '>=': ['age', 44] },
     weight: 8,
+    prompt: '訃聞來得突然。名字你認得，只是很多年沒見了。',
     choices: [
       { id: 'safe', label: '到場致意', odds: '+20', mag: 1 },
       { id: 'normal', label: '幫忙處理後事', odds: '0', mag: 2 },
@@ -315,6 +328,7 @@ export const lifeEvents = [
     id: 'sleepless_year',
     require: { all: [{ '<=': ['nerve', 60] }, { '>=': ['age', 30] }] },
     weight: 9,
+    prompt: '躺下之後腦袋開始算數字。天亮的時候你還在算。',
     choices: [
       { id: 'safe', label: '看醫生', odds: '+25', mag: 2 },
       { id: 'normal', label: '換個作息', odds: '+5', mag: 2 },
@@ -337,6 +351,7 @@ export const lifeEvents = [
     id: 'someone_else_made_it',
     require: { all: [{ '>=': ['age', 33] }, { '>=': ['network', 18] }] },
     weight: 10,
+    prompt: '同期的那個人上了雜誌。你把整篇看完了。',
     choices: [
       { id: 'safe', label: '真心替他高興', odds: '+20', mag: 2 },
       { id: 'normal', label: '問他怎麼做到的', odds: '+5', mag: 2 },
@@ -362,6 +377,7 @@ export const lifeEvents = [
     id: 'retirement_math',
     require: { '>=': ['age', 52] },
     weight: 11,
+    prompt: '你打開試算表，把剩下的年份、支出、和帳戶餘額打進去。',
     choices: [
       { id: 'safe', label: '保守估算', odds: '+30', mag: 2 },
       { id: 'normal', label: '認真算一次', odds: '+5', mag: 2 },

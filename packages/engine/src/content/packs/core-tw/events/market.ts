@@ -10,6 +10,7 @@ export const marketEvents = [
     // 與 retail_leek 兩個人格能不能說得通的關鍵。
     require: { '>=': ['position.count', 1] },
     weight: 10,
+    prompt: '手上的部位一週跌掉三成。你打開帳戶又關掉，一天七次。',
     choices: [
       { id: 'safe', label: '停損出場', odds: '+30', mag: 1 },
       { id: 'normal', label: '再觀察看看', odds: '0', mag: 2 },
@@ -26,6 +27,7 @@ export const marketEvents = [
     id: 'hot_tip_from_colleague',
     require: { all: [{ '>=': ['age', 22] }, { '>=': ['capital', 20] }] },
     weight: 9,
+    prompt: '茶水間有人壓低聲音跟你講一檔，說他表哥就在裡面做。',
     choices: [
       { id: 'safe', label: '笑一笑就好', odds: '+35', mag: 1 },
       { id: 'normal', label: '買一點點', odds: '-5', mag: 2 },
@@ -52,6 +54,7 @@ export const marketEvents = [
     id: 'read_the_annual_report',
     require: { '>=': ['age', 23] },
     weight: 9,
+    prompt: '年報下載下來兩百多頁。你翻到第三頁就開始想別的事。',
     choices: [
       { id: 'safe', label: '看標題就好', odds: '+25', mag: 1 },
       { id: 'normal', label: '翻一翻財報', odds: '0', mag: 2 },
@@ -101,6 +104,7 @@ export const marketEvents = [
     id: 'chase_the_top',
     require: { all: [{ in: ['era.phase', ['boom', 'mania']] }, { '>=': ['capital', 30] }] },
     weight: 12,
+    prompt: '你看很久的那一檔，這個月又漲了四成。現在追，還是等回檔。',
     choices: [
       { id: 'safe', label: '這種價格我不追', odds: '+30', mag: 1 },
       { id: 'normal', label: '小買一些跟上', odds: '-5', mag: 2 },
@@ -127,6 +131,7 @@ export const marketEvents = [
     id: 'margin_call_temptation',
     require: { all: [{ '>=': ['capital', 80] }, { '>=': ['nerve', 50] }, { in: ['era.phase', ['boom', 'mania']] }] },
     weight: 7,
+    prompt: '營業員說你的額度可以開到兩倍，「反正現在行情這麼好」。',
     choices: [
       { id: 'safe', label: '不碰融資', odds: '+35', mag: 1 },
       { id: 'normal', label: '開個戶備著', odds: '0', mag: 2 },
@@ -153,6 +158,7 @@ export const marketEvents = [
     id: 'dividend_habit',
     require: { all: [{ '>=': ['age', 28] }, { '>=': ['capital', 50] }] },
     weight: 9,
+    prompt: '除息公告出來了。你可以領現金，也可以讓它自己滾下去。',
     choices: [
       { id: 'safe', label: '領息就好', odds: '+30', mag: 2 },
       { id: 'normal', label: '股息再投入', odds: '+10', mag: 2 },
@@ -175,6 +181,7 @@ export const marketEvents = [
     id: 'friend_wants_to_borrow',
     require: { all: [{ '>=': ['capital', 60] }, { '>=': ['network', 15] }] },
     weight: 8,
+    prompt: '很久沒聯絡的朋友約你吃飯，坐下來十分鐘就講到週轉。',
     choices: [
       { id: 'safe', label: '說自己也沒錢', odds: '+30', mag: 1 },
       { id: 'normal', label: '借一小筆', odds: '-5', mag: 2 },
@@ -201,6 +208,7 @@ export const marketEvents = [
     id: 'investment_seminar',
     require: { all: [{ '>=': ['age', 25] }, { '<=': ['cognition', 40] }] },
     weight: 8,
+    prompt: '傳單上寫「三堂課學會看懂財報」，前兩個小時免費。',
     choices: [
       { id: 'safe', label: '不去', odds: '+30', mag: 1 },
       { id: 'normal', label: '去聽免費場', odds: '0', mag: 2 },
@@ -223,6 +231,7 @@ export const marketEvents = [
     id: 'account_untouched',
     require: { all: [{ '>=': ['age', 30] }, { '>=': ['capital', 100] }] },
     weight: 7,
+    prompt: '這一年你什麼都沒做。帳戶就在那裡，看不看隨你。',
     choices: [
       { id: 'safe', label: '一整年不看盤', odds: '+35', mag: 2 },
       { id: 'normal', label: '每月看一次', odds: '+5', mag: 2 },
@@ -245,6 +254,7 @@ export const marketEvents = [
     id: 'insider_rumour',
     require: { all: [{ '>=': ['network', 30] }, { '>=': ['capital', 60] }] },
     weight: 4,
+    prompt: '飯局上有人講了一件還沒公告的事，講完自己愣了一下。',
     choices: [
       { id: 'safe', label: '當作沒聽到', odds: '+35', mag: 1 },
       { id: 'normal', label: '查證再說', odds: '+5', mag: 2 },
@@ -270,6 +280,7 @@ export const marketEvents = [
     id: 'the_one_that_got_away',
     require: { all: [{ '>=': ['counter.opportunities_declined', 1] }, { '>=': ['age', 30] }] },
     weight: 9,
+    prompt: '你當初放掉的那個今天上了新聞，標題是它翻了幾倍。',
     choices: [
       { id: 'safe', label: '不去想它', odds: '+25', mag: 1 },
       { id: 'normal', label: '看看現在多少', odds: '-5', mag: 2 },
@@ -295,6 +306,7 @@ export const marketEvents = [
     id: 'savings_rate_decision',
     require: { '>=': ['age', 24] },
     weight: 10,
+    prompt: '銀行 App 把你這一年的支出畫成一張圓餅圖。你看了很久。',
     choices: [
       { id: 'safe', label: '維持現在的存法', odds: '+25', mag: 1 },
       { id: 'normal', label: '每個月多存一點', odds: '0', mag: 2 },
@@ -317,6 +329,7 @@ export const marketEvents = [
     id: 'crypto_curiosity',
     require: { all: [{ '>=': ['age', 25] }, { '>=': ['capital', 30] }, { '>=': ['cognition', 15] }] },
     weight: 7,
+    prompt: '朋友傳來一個網址，說「這個你不懂就會錯過」。你確實不懂。',
     choices: [
       { id: 'safe', label: '看不懂就不碰', odds: '+30', mag: 1 },
       { id: 'normal', label: '買一點當學費', odds: '-10', mag: 2 },
@@ -342,6 +355,7 @@ export const marketEvents = [
     id: 'sell_everything_fear',
     require: { all: [{ '==': ['era.phase', 'crash'] }, { '>=': ['capital', 50] }] },
     weight: 11,
+    prompt: '開盤十分鐘，你手上每一檔都是綠的。手機一直在震。',
     choices: [
       { id: 'safe', label: '全部換現金', odds: '+20', mag: 2 },
       { id: 'normal', label: '減碼一半', odds: '+5', mag: 2 },
@@ -368,6 +382,7 @@ export const marketEvents = [
     id: 'teach_someone_to_invest',
     require: { all: [{ '>=': ['cognition', 35] }, { '>=': ['age', 35] }] },
     weight: 6,
+    prompt: '有人問你「該買什麼」。他今年剛開始工作。',
     choices: [
       { id: 'safe', label: '叫他去買定存', odds: '+30', mag: 1 },
       { id: 'normal', label: '講一些原則', odds: '+5', mag: 2 },
@@ -393,6 +408,7 @@ export const marketEvents = [
     id: 'company_gone_bad',
     require: { all: [{ '>=': ['capital', 80] }, { '>=': ['age', 30] }] },
     weight: 6,
+    prompt: '你持有的那家公司發了重訊，說明會排在三天後。',
     choices: [
       { id: 'safe', label: '第一時間出清', odds: '+25', mag: 2 },
       { id: 'normal', label: '等等看說明會', odds: '-5', mag: 2 },
@@ -415,6 +431,7 @@ export const marketEvents = [
     id: 'long_term_conviction',
     require: { all: [{ '>=': ['age', 40] }, { '>=': ['counter.did_homework', 3] }] },
     weight: 7,
+    prompt: '你追了二十年的那個產業，現在你比誰都清楚它值多少。',
     choices: [
       { id: 'safe', label: '分散再分散', odds: '+30', mag: 2 },
       { id: 'normal', label: '集中在懂的幾檔', odds: '0', mag: 2 },

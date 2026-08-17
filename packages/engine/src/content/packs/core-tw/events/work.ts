@@ -22,6 +22,7 @@ export const workEvents = [
     id: 'night_shift_study',
     require: { all: [{ '>=': ['age', 20] }, { '<=': ['age', 35] }] },
     weight: 8,
+    prompt: '補習班的課表貼在玻璃門上，晚上七點到十點。你在門口站了一會兒才走。',
     choices: [
       { id: 'safe', label: '下班就是下班', odds: '+25', mag: 1 },
       { id: 'normal', label: '每週兩晚進修', odds: '0', mag: 2 },
@@ -44,6 +45,7 @@ export const workEvents = [
     id: 'headhunter_call',
     require: { all: [{ '>=': ['age', 26] }, { '>=': ['network', 15] }] },
     weight: 7,
+    prompt: '一個沒存過的號碼，開口就叫得出你三年前做過的專案。',
     choices: [
       { id: 'safe', label: '禮貌婉拒', odds: '+30', mag: 1 },
       { id: 'normal', label: '去聊聊看', odds: '0', mag: 2 },
@@ -66,6 +68,7 @@ export const workEvents = [
     id: 'take_the_blame',
     require: { '>=': ['career.rank', 2] },
     weight: 7,
+    prompt: '事情出在你們這組，但簽名的是別人。會議室裡沒有人先開口。',
     choices: [
       { id: 'safe', label: '照實說明', odds: '+15', mag: 1 },
       { id: 'normal', label: '一起扛', odds: '0', mag: 2 },
@@ -88,6 +91,7 @@ export const workEvents = [
     id: 'mentor_a_junior',
     require: { '>=': ['career.rank', 2] },
     weight: 6,
+    prompt: '新來的把你三年前踩過的坑又踩了一次，而且不知道自己踩了。',
     choices: [
       { id: 'safe', label: '公事公辦', odds: '+20', mag: 1 },
       { id: 'normal', label: '順手帶一下', odds: '0', mag: 2 },
@@ -110,6 +114,7 @@ export const workEvents = [
     id: 'factory_line_stop',
     require: { '==': ['career.industry', 'factory'] },
     weight: 8,
+    prompt: '半夜兩點，線停了。值班的打電話問你，要不要等早班再處理。',
     choices: [
       { id: 'safe', label: '按流程回報', odds: '+25', mag: 1 },
       { id: 'normal', label: '自己先排除', odds: '0', mag: 2 },
@@ -132,6 +137,7 @@ export const workEvents = [
     id: 'public_exam_prep',
     require: { all: [{ '==': ['career.industry', 'public'] }, { '<=': ['age', 45] }] },
     weight: 6,
+    prompt: '公文夾上壓著升等考的簡章，已經放了兩個禮拜。',
     choices: [
       { id: 'safe', label: '穩穩做事', odds: '+30', mag: 1 },
       { id: 'normal', label: '準備升等考', odds: '0', mag: 2 },
@@ -151,6 +157,7 @@ export const workEvents = [
     id: 'class_of_forty',
     require: { '==': ['career.industry', 'education'] },
     weight: 7,
+    prompt: '第三排那個學生這學期第五次沒交作業。你知道他家裡的事。',
     choices: [
       { id: 'safe', label: '照課本進度', odds: '+25', mag: 1 },
       { id: 'normal', label: '多留半小時', odds: '0', mag: 2 },
@@ -170,6 +177,7 @@ export const workEvents = [
     id: 'client_dinner',
     require: { in: ['career.industry', ['trade', 'finance', 'own']] },
     weight: 9,
+    prompt: '包廂裡第二瓶已經開了。對方把杯子推到你面前，合約還在他手邊。',
     choices: [
       { id: 'safe', label: '喝茶就好', odds: '+20', mag: 1 },
       { id: 'normal', label: '陪一輪', odds: '0', mag: 2 },
@@ -195,6 +203,7 @@ export const workEvents = [
     id: 'restructuring',
     require: { all: [{ '>=': ['age', 35] }, { in: ['era.phase', ['crash', 'recession']] }] },
     weight: 9,
+    prompt: '人資這兩週約談了很多人，順序看不出規則。今天輪到你這一層。',
     choices: [
       { id: 'safe', label: '低調做事', odds: '+15', mag: 1 },
       { id: 'normal', label: '爭取留下', odds: '0', mag: 2 },
@@ -220,6 +229,7 @@ export const workEvents = [
     id: 'side_project',
     require: { all: [{ '>=': ['age', 24] }, { '>=': ['nerve', 40] }] },
     weight: 8,
+    prompt: '有人問你能不能接個案子。錢不多，但要用掉你所有的週末。',
     choices: [
       { id: 'safe', label: '想想就好', odds: '+25', mag: 1 },
       { id: 'normal', label: '週末做一點', odds: '0', mag: 2 },
@@ -242,6 +252,7 @@ export const workEvents = [
     id: 'industry_conference',
     require: { '>=': ['career.rank', 2] },
     weight: 7,
+    prompt: '議程表上有一個講者欄位是空的，主辦方問你要不要。',
     choices: [
       { id: 'safe', label: '聽完就走', odds: '+25', mag: 1 },
       { id: 'normal', label: '交換幾張名片', odds: '0', mag: 2 },
@@ -261,6 +272,7 @@ export const workEvents = [
     id: 'boss_asks_favour',
     require: { all: [{ '>=': ['career.rank', 1] }, { '>=': ['age', 25] }] },
     weight: 7,
+    prompt: '主管把門帶上，說有件事想拜託你，「不算公事」。',
     choices: [
       { id: 'safe', label: '婉轉推掉', odds: '+20', mag: 1 },
       { id: 'normal', label: '幫這一次', odds: '0', mag: 2 },
@@ -283,6 +295,7 @@ export const workEvents = [
     id: 'burnout_warning',
     require: { '<=': ['nerve', 45] },
     weight: 12,
+    prompt: '你在辦公室的椅子上醒過來，一時想不起昨天做了什麼。',
     choices: [
       { id: 'safe', label: '請長假', odds: '+35', mag: 2 },
       { id: 'normal', label: '減少加班', odds: '+5', mag: 2 },
@@ -305,6 +318,7 @@ export const workEvents = [
     id: 'trade_secret_offer',
     require: { all: [{ '>=': ['career.rank', 2] }, { '>=': ['age', 30] }, { not: { flag: 'once_trade_secret_offer' } }] },
     weight: 4,
+    prompt: '停車場有人叫住你，說只想知道下一季的排程，「又不是什麼機密」。',
     choices: [
       { id: 'safe', label: '當場拒絕', odds: '+35', mag: 1 },
       { id: 'normal', label: '裝作沒聽懂', odds: '+5', mag: 2 },
@@ -333,6 +347,7 @@ export const workEvents = [
     id: 'company_stock_options',
     require: { all: [{ '==': ['career.industry', 'tech'] }, { '>=': ['career.rank', 2] }, { not: { flag: 'once_company_stock_options' } }] },
     weight: 7,
+    prompt: '配股入帳的通知寄來了。鎖定期剛過，價格是你入職那天的三倍。',
     choices: [
       { id: 'safe', label: '一拿到就賣', odds: '+30', mag: 1 },
       { id: 'normal', label: '賣一半', odds: '0', mag: 2 },
@@ -356,6 +371,7 @@ export const workEvents = [
     id: 'union_or_not',
     require: { all: [{ in: ['career.industry', ['factory', 'service', 'education']] }, { not: { flag: 'once_union_or_not' } }] },
     weight: 5,
+    prompt: '連署書在休息室傳了一圈，傳到你手上的時候還剩三格。',
     choices: [
       { id: 'safe', label: '不表態', odds: '+25', mag: 1 },
       { id: 'normal', label: '簽名支持', odds: '0', mag: 2 },
@@ -379,6 +395,7 @@ export const workEvents = [
     id: 'first_paycheck',
     require: { all: [{ '<=': ['age', 24] }, { '>=': ['career.rank', 1] }, { not: { flag: 'once_first_paycheck' } }] },
     weight: 9,
+    prompt: '第一筆薪水入帳。你把簡訊看了兩次，確認位數沒看錯。',
     choices: [
       { id: 'safe', label: '全部存起來', odds: '+30', mag: 2 },
       { id: 'normal', label: '請家人吃一頓', odds: '+10', mag: 2 },
@@ -402,6 +419,7 @@ export const workEvents = [
     id: 'relocation_offer',
     require: { all: [{ '>=': ['age', 28] }, { '>=': ['career.rank', 2] }, { '>=': ['nerve', 45] }, { not: { flag: 'once_relocation_offer' } }] },
     weight: 6,
+    prompt: '公司要你去外地待一年，加給開得不錯。家裡還不知道這件事。',
     choices: [
       { id: 'safe', label: '留在原地', odds: '+25', mag: 1 },
       { id: 'normal', label: '去一年看看', odds: '0', mag: 2 },
@@ -429,6 +447,7 @@ export const workEvents = [
     id: 'late_career_squeeze',
     require: { all: [{ '>=': ['age', 48] }, { '>=': ['career.rank', 1] }] },
     weight: 8,
+    prompt: '新來的主管比你小八歲。會議上他問：「這個做法是誰定的？」',
     choices: [
       { id: 'safe', label: '守住位置', odds: '+20', mag: 1 },
       { id: 'normal', label: '轉做顧問性質', odds: '0', mag: 2 },

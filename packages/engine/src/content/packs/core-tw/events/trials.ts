@@ -9,6 +9,7 @@ export const trialEvents = [
     id: 'drawdown_50',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '你抱著的那個部位，帳面只剩一半。今天又跌了。',
     choices: [
       { id: 'safe', label: '關掉 App，去睡覺', odds: '+25', mag: 1 },
       { id: 'normal', label: '每天看一次就好', odds: '0', mag: 2 },
@@ -34,6 +35,7 @@ export const trialEvents = [
     id: 'triple_temptation',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '三倍了。手機上那個數字你看了整個晚上。',
     choices: [
       { id: 'safe', label: '算一次帳就好', odds: '+30', mag: 1 },
       { id: 'normal', label: '跟家人講一聲', odds: '0', mag: 2 },
@@ -56,6 +58,7 @@ export const trialEvents = [
     id: 'family_emergency',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '家裡臨時要一筆錢，而你的錢全部在那個部位裡。',
     choices: [
       { id: 'safe', label: '先跟親戚周轉', odds: '+30', mag: 1 },
       { id: 'normal', label: '動用其他存款', odds: '0', mag: 2 },
@@ -81,6 +84,7 @@ export const trialEvents = [
     id: 'rumour_of_fraud',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '有人在論壇上說那家公司帳做假，附了幾張你看不太懂的截圖。',
     choices: [
       { id: 'safe', label: '查證公開資訊', odds: '+25', mag: 2 },
       { id: 'normal', label: '問問業內的朋友', odds: '0', mag: 2 },
@@ -103,6 +107,7 @@ export const trialEvents = [
     id: 'everyone_says_sell',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '認識的人一個一個勸你出場，理由都不太一樣。',
     choices: [
       { id: 'safe', label: '聽聽他們的理由', odds: '+25', mag: 2 },
       { id: 'normal', label: '禮貌地不回應', odds: '0', mag: 2 },
@@ -128,6 +133,7 @@ export const trialEvents = [
     id: 'better_offer_elsewhere',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '另一個機會擺在眼前，但你的錢還在原來那裡。',
     choices: [
       { id: 'safe', label: '維持原本的計畫', odds: '+30', mag: 2 },
       { id: 'normal', label: '兩邊都放一點', odds: '0', mag: 2 },
@@ -150,6 +156,7 @@ export const trialEvents = [
     id: 'lockup_years',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '合約寫得很清楚：這筆錢三年內動不了。',
     choices: [
       { id: 'safe', label: '把它當作不存在', odds: '+30', mag: 2 },
       { id: 'normal', label: '每季看一次', odds: '0', mag: 2 },
@@ -172,6 +179,7 @@ export const trialEvents = [
     id: 'paper_gains_tax',
     require: { '>=': ['position.count', 1] },
     weight: 0,
+    prompt: '會計師看了你的持倉，問你這部分的稅有沒有準備。',
     choices: [
       { id: 'safe', label: '先預留稅金', odds: '+30', mag: 2 },
       { id: 'normal', label: '請人幫忙算', odds: '0', mag: 2 },

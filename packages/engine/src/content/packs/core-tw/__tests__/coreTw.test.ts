@@ -116,6 +116,18 @@ describe('內容的內部一致性', () => {
     expect(orphans).toEqual([])
   })
 
+  it('每個事件都有情境，而且不是把結局先講出來（§7.2）', () => {
+    for (const event of coreTwEvents) {
+      expect(event.prompt, event.id).toBeTruthy()
+      // 一到兩句：太短說不出畫面，太長玩家不會讀
+      expect(event.prompt.length, event.id).toBeGreaterThan(8)
+      expect(event.prompt.length, event.id).toBeLessThan(60)
+      // 情境不能是結局的複製貼上——那等於先爆雷
+      expect(event.prompt, event.id).not.toBe(event.good.text)
+      expect(event.prompt, event.id).not.toBe(event.bad.text)
+    }
+  })
+
   it('每個事件的三個選項都在，機率顯示得出來', () => {
     for (const event of coreTwEvents) {
       expect(event.choices.map((c) => c.id).sort(), event.id).toEqual(['bold', 'normal', 'safe'])
@@ -135,7 +147,7 @@ describe('§2 暗示但不指名', () => {
 
   const strings: string[] = []
   for (const event of coreTwEvents) {
-    strings.push(...event.choices.map((c) => c.label), event.good.text, event.bad.text)
+    strings.push(...event.choices.map((c) => c.label), event.good.text, event.bad.text, event.prompt)
   }
   for (const opportunity of coreTwOpportunities) {
     for (const level of [opportunity.signal.low, opportunity.signal.mid, opportunity.signal.high]) {

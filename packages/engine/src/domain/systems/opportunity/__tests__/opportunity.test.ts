@@ -291,6 +291,30 @@ describe('positions (§1.3, §7.1)', () => {
     expect(LIFE_OPPORTUNITY.trials).toContain(queued[0])
   })
 
+  it('同一個考驗不會連續兩年丟給你', () => {
+    const found = runUntilOffer('-trial-repeat')
+    let current = found.advance(
+      found.state,
+      { type: 'takeOpportunity', id: offerIdFor(LIFE_OPPORTUNITY.id), sizing: 'normal' },
+      found.rng,
+    ).nextState
+
+    const thrown: string[] = []
+    for (let turn = 0; turn < 20; turn++) {
+      const result = found.advance(current, { type: 'advanceTurn' }, found.rng)
+      current = result.nextState
+      for (const effect of result.effects) {
+        if (effect.type === 'event.trigger') thrown.push(effect.eventId)
+      }
+    }
+
+    // 部位到期就結清了，所以一輩子丟不了太多次——有兩次就足以檢查連續性
+    expect(thrown.length).toBeGreaterThanOrEqual(2)
+    for (let i = 1; i < thrown.length; i++) {
+      expect(thrown[i], `連續兩次都是 ${thrown[i]}`).not.toBe(thrown[i - 1])
+    }
+  })
+
   it('treats an unanswered trial as holding, and a sell as panic selling', () => {
     const found = runUntilOffer('-hold')
     let current = found.advance(

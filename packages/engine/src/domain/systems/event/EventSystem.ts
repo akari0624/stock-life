@@ -168,9 +168,15 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
       if (ctx.state.events.pending.length > 0) return
 
       const eligible = options.events.filter(
-        (event) => event.weight > 0 && isSatisfied(event.require, { state: ctx.state, rng: ctx.rng }),
+        (event) =>
+          event.weight > 0 &&
+          // 去年抽過的今年不抽：情境現在是看得見的，連續兩年同一句會像壞掉
+          event.id !== ctx.state.events.lastDrawn &&
+          isSatisfied(event.require, { state: ctx.state, rng: ctx.rng }),
       )
       const drawn = weightedPick(eligible, ctx.rng)
+      // 沒得抽就是安靜的一年——寧可沒事發生，也不要同一件事再演一次
+      ctx.state.events.lastDrawn = drawn?.id
       if (drawn) present(ctx, drawn)
     },
 

@@ -54,6 +54,16 @@ describe('畫面', () => {
     session.dispose()
   })
 
+  it('遊戲一開始舞台就有東西，不是一個純黑的方塊', async () => {
+    const { store, session } = await startedStore()
+    const markup = render(store, <GameScreen session={session} />)
+
+    // 開場的佈景（沒有素材時是 token 漸層的 fallback）
+    expect(markup).toContain('stage-bg')
+    expect(markup).toContain('data-bg="life_start"')
+    session.dispose()
+  })
+
   it('結算畫面在還沒結束時不會硬要顯示摘要', async () => {
     const { store, session } = await startedStore()
     const markup = render(store, <SettlementScreen session={session} />)

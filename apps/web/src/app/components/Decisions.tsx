@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Decision, PlayerView, Sizing } from '@stock-life/engine'
 import type { GameSession } from '../GameSession.ts'
-import { DICE_LABELS, SIZING_LABELS, TRIAL_LABELS, int, money, percent } from '../format.ts'
+import { DICE_LABELS, SIZING_LABELS, TRIAL_LABELS, int, money, offerDetailLine, percent } from '../format.ts'
 import { BUTTON, BUTTON_ACTIVE, CARD, OPTION, PRIMARY } from '../ui.ts'
 import { cn } from '../../styles/cn.ts'
 
@@ -114,11 +114,10 @@ export function Decisions({ session, view, decision, finished, onSettle }: Props
             <p className="text-body mt-1 text-at-text-primary">{offer.label}</p>
             {offer.detail && (
               <ul className="text-caption mt-2 flex flex-wrap gap-x-4 text-at-text-muted">
-                {Object.entries(offer.detail).map(([key, value]) => (
-                  <li key={key}>
-                    {key}：{Array.isArray(value) ? value.join('、') : String(value)}
-                  </li>
-                ))}
+                {Object.entries(offer.detail).map(([key, value]) => {
+                  const line = offerDetailLine(key, value)
+                  return line ? <li key={key}>{line}</li> : null
+                })}
               </ul>
             )}
           </header>

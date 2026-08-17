@@ -1,5 +1,5 @@
 import { EMPTY_PLAN, type Scene, type ScenePlan } from './Scene.ts'
-import { project, type StageState } from './StageState.ts'
+import { carryFrom, EMPTY_CARRY, project, type StageCarry, type StageState } from './StageState.ts'
 
 /**
  * Director —— rAF 驅動的**邏輯時間軸**（DESIGN.md §4、§10.4）。
@@ -70,6 +70,8 @@ export class Director {
   private readonly cancelFrame: (handle: number) => void
 
   private stageCache: { key: string; stage: StageState } | undefined
+  /** 上一段演出留在台上的佈景與人物（見 StageCarry） */
+  private carry: StageCarry = EMPTY_CARRY
 
   constructor(options: DirectorOptions = {}) {
     this.now = options.now ?? defaultNow
@@ -80,6 +82,9 @@ export class Director {
 
   /** 載入一段演出並回到時間 0（不自動播）。 */
   load(plan: ScenePlan): void {
+    // 先把「現在台上有什麼」記下來再換劇本：多數 command 根本不發 scene.*，
+    // 沒有這一步，事件演完之後舞台就會空掉（見 StageCarry）。
+    this.carry = carryFrom(this.getStage())
     this.stopLoop()
     this.plan = plan
     this.cues = [...plan.scenes].sort((a, b) => a.start - b.start)
@@ -188,11 +193,12 @@ export class Director {
     if (this.stageCache?.key !== key) {
       this.stageCache = {
         key,
-        stage: project(this.plan, this.time, {
-          rate: this.playbackRate,
-          playing: this.playing,
-          finished: this.finishedFlag,
-        }),
+        stage: project(
+          this.plan,
+          this.time,
+          { rate: this.playbackRate, playing: this.playing, finished: this.finishedFlag },
+          this.carry,
+        ),
       }
     }
     return this.stageCache.stage

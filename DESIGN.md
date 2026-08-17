@@ -129,9 +129,9 @@ apps/web/                   ← React + Tailwind
       director/             演出時間軸播放器（skip / speed / replay）
       stage/                場景渲染（現在 CSS/文字，日後貼圖）
       assets/               AssetResolver（id → 素材，缺就 fallback）
-      audio/                AudioBus（現在 no-op）
+      audio/                AudioBus + AudioResolver（無音檔亦可運作，見 §10.7）
     ui/                     React 元件，只讀 view model
-    styles/                 design token 三層（見 §10.3）
+    styles/                 globals.css 匯入 token（見 §10.3）+ cn()
     app/                    組裝、存檔、畫面狀態機
 ```
 
@@ -358,7 +358,8 @@ type SceneHint =
   | { type: 'scene.bg';    id: string }
   | { type: 'scene.actor'; id: string; emote?: string; at?: 'left'|'right' }
   | { type: 'scene.say';   actor: string; text: string }
-  | { type: 'scene.sfx';   id: string }
+  | { type: 'scene.sfx';   id: string; priority?: 'high'|'normal'; dedupeMs?: number } // §10.7
+  | { type: 'scene.bgm';   id: string; fadeMs?: number }                              // §10.7
   | { type: 'scene.fx';    id: string }   // 崩盤紅光、開香檳…
 ```
 
@@ -563,7 +564,9 @@ interface GameSystem {
 | 建置 | Vite（apps/web）、tsc（packages/engine） | vite 8 |
 | 語言 | TypeScript | 6.0 |
 | UI | React + React Compiler（已啟用） | 19.2 |
-| CSS | **Tailwind v4 全面採用** + 三層 design token | 4.3 |
+| CSS | **Tailwind v4 全面採用** + 三層 design token pipeline | 4.3 |
+| Token 生成 | **style-dictionary**（devDep，DTCG → CSS + `@theme`） | 5.x |
+| Class 合併 | `clsx` + `tailwind-merge`（`cn()`，見 §10.3） | — |
 | 動畫 | **自建 director + Web Animations API**，零依賴 | — |
 | Schema | **zod**（授權真相）→ `toJSONSchema()` 匯出 | 4.4.3 |
 | 測試 | **vitest**，兩個 project（node / browser） | 4.1 |
@@ -580,7 +583,9 @@ stock-life/
   pnpm-workspace.yaml
   turbo.json
   packages/engine/     ← dependencies: { zod }。沒有 react
-  apps/web/            ← dependencies: { react, react-dom, @stock-life/engine }
+  packages/tokens/     ← DTCG token JSON + style-dictionary build。零 runtime 依賴
+  apps/web/            ← dependencies: { react, react-dom, clsx, tailwind-merge,
+                                         @stock-life/engine, @stock-life/tokens }
 ```
 
 **這是 §3.1 紀律的物理落實**：`packages/engine/package.json` 不列 react，
@@ -590,46 +595,134 @@ pnpm 嚴格 node_modules 讓「從 domain import UI」成為**編譯期錯誤**�
 Turborepo 負責：`build` 的 engine → web 依賴順序、test／lint 快取、
 以及把 TODO #8 的無頭平衡跑分獨立成 `test:balance` task。
 
-> `packages/tokens` 暫不獨立。design token 先放 `apps/web/src/styles/`，
-> 等未來編輯器 app 出現（第二個消費端）再抽出來。避免過早抽象。
+`packages/tokens` 從第一天就獨立成 package——不是為了「未來可能有第二個消費端」，
+而是因為它有自己的 build step（style-dictionary）與自己的 devDependencies，
+塞在 `apps/web` 裡會讓 web 的 build 綁上一個與 React 無關的產生器。
+Turborepo 負責 `tokens → web` 的 build 順序。
 
-### 10.3 Tailwind v4 與三層 token 的接合
+### 10.3 Design Token Pipeline（三層）
 
-三層＝ **global（原色）→ alias（語意）→ component**。
-與 Tailwind v4 接合的關鍵一步是：**只有 alias 層進 `@theme`。**
+架構參考 `pcsc/f2e-uniopen` 的 `@pcsc/tailwind-config`（見 §10.6 的差異說明）。
+三層用**前綴**表達，命名本身就昭示層級：
 
-```css
-/* Tier 1 · global primitive —— 純 :root 變數，刻意不進 @theme */
-:root {
-  --g-green-950: #0a1a0f;  --g-green-900: #0d1f14;  --g-green-500: #2d5a3d;
-  --g-amber-400: #e8b64c;  --g-red-500:   #c8442f;  --g-neutral-50: #f5f2e8;
-}
+| 層 | 前綴 | 內容 | 進 Tailwind utility？ |
+|---|---|---|---|
+| Tier 1 · global | `gt-` | 原色與原始尺寸（`gt-green-500`） | ❌ **不進** |
+| Tier 2 · alias | `at-` | 語意（`at-surface-raised`、`at-loss`） | ✅ 進 |
+| Tier 3 · component | `ct-` | 元件專屬（`ct-stage-actor_shadow`） | ✅ 進 |
 
-/* Tier 2 · alias / semantic —— 進 @theme，成為 utility 的唯一來源 */
-@theme {
-  --color-surface:        var(--g-green-900);
-  --color-surface-raised: var(--g-green-800);
-  --color-text:           var(--g-neutral-50);
-  --color-text-muted:     var(--g-neutral-400);
-  --color-accent:         var(--g-amber-400);
-  --color-gain:           var(--g-green-400);
-  --color-loss:           var(--g-red-500);
-}
+**命名規則（兩個分隔符，各一種語意）：**
 
-/* 主題切換只動 alias 層，global 不動 */
-[data-theme="scoreboard"] { --color-surface: var(--g-green-950); /* … */ }
+| 字元 | 語意 | 例 |
+|---|---|---|
+| `-` | **層級**分隔符 | `ct-button_filled-main-default` = `ct` › `button_filled` › `main` › `default` |
+| `_` | 同一層級內的**複合詞**分隔符 | `button_filled`、`actor_shadow`、`text_muted` |
+
+⚠️ **token JSON 的 key 絕對不能含 `-`**。因為 `-` 恆為層級分隔符，
+`{"at": {"text-muted": …}}` 產出的名稱會與兩層 nesting 完全無法區分，
+命名就失去機器可逆性。此規則必須進 schema 驗證（見 §10.3 的驗證項）。
+
+#### 資料流
+
+```
+packages/tokens/src/*.tokens.json      DTCG 格式（$type/$value）· 唯一真相
+        │
+        ▼ style-dictionary（單一 build，多個 platform 輸出）
+        ├──► tokens.css        :root { --gt-* --at-* --ct-* }        全部三層
+        └──► theme.css         @theme { --color-at-* --color-ct-* }  只有 at + ct
+        │
+        ▼ apps/web/src/styles/globals.css
+    @import "tailwindcss";
+    @import "@stock-life/tokens/tokens.css";
+    @import "@stock-life/tokens/theme.css";
 ```
 
-**為什麼這樣接**：Tailwind 的 utility 表面就等於 alias 層。
-`bg-surface-raised`、`text-loss` 存在，而 `bg-g-green-500` **不存在**——
-想繞過語意層直接用原色，語法上就辦不到。於是「用 Tailwind」與「遵守 token 階層」
-變成同一件事，靠 API 表面強制，不靠 code review 提醒。
+**兩個輸出都由同一次 style-dictionary build 產生**，各是一個 custom format
+消費同一份 token AST。**不做「先生成 CSS 再用字串轉換成 class 表」的後處理**（§10.6 ④）。
 
-**Tier 3 · component token** 只給少數複雜到需要的元件（主要是
-`presentation/stage/`），寫在該元件自己的 CSS 檔裡並引用 alias 變數：
-`--c-stage-actor-shadow: …`。這也是全專案唯一允許出現手寫原生 CSS 的地方。
+#### 命名規則讓轉換層整個消失
 
-**與 UGC 的對齊**：主題既然只是一組 alias 變數的覆寫，日後 mod 就能發佈主題包。
+DTCG 的 nesting 經 style-dictionary 預設就是用 `-` 串接，而 `_` 原樣保留。
+所以層級與複合詞的區分**不需要任何 custom name transform**：
+
+```json
+{ "ct": { "button_filled": { "main": { "default": { "$type": "color", "$value": "…" } } } } }
+```
+→ `--ct-button_filled-main-default`（零設定）
+
+`theme.css` 的 format 也只是加前綴，沒有跳脫、沒有字串重組：
+
+```css
+@theme {
+  --color-at-surface-raised: var(--at-surface-raised);
+  --color-ct-stage-actor_shadow: var(--ct-stage-actor_shadow);
+}
+```
+
+於是整條 pipeline 唯一的邏輯就是 **prefix filter 掉 `gt`**。
+參考專案的 126 行腳本與 30+ 項複合詞白名單，是選用 `/` 分隔的必然代價（§10.6 ④）。
+
+#### 為什麼 `gt/` 不進 `@theme`
+
+Tailwind 的 utility 表面就等於「允許使用的層級」。`bg-at-surface-raised` 存在，
+而 `bg-gt-green-500` **根本不存在**——想繞過語意層直接用原色，語法上就辦不到。
+於是「用 Tailwind」與「遵守 token 階層」變成同一件事，靠 API 表面強制，
+不靠 code review 提醒。實作上就是 `theme.css` 的 format 加一行 prefix filter。
+
+#### 主題
+
+主題切換**只覆寫 alias 層**，global 不動：
+
+```css
+[data-theme="scoreboard"] {
+  --at-surface-base: var(--gt-green-950);
+  --at-accent:       var(--gt-gold-400);
+}
+```
+
+Tailwind utility 因為指向 `var(--at-*)`，會自動跟著換色。
+**與 UGC 對齊**：主題既然只是一組 alias 變數的覆寫，日後 mod 就能發佈主題包。
+
+#### 用 `-` 而非 `/` 換到的三件事
+
+1. **alpha 修飾符可用**：`bg-at-loss/20` 正常運作。`/` 分隔會與 Tailwind 的
+   `bg-{color}/{opacity}` 語法衝突——參考專案的 `gt/black-opacity/*`、
+   `gt/white-opacity/*` 兩組原色，應該就是這個限制的補償產物。
+2. **零轉換層**（見上一節）。
+3. **`@theme` 不需跳脫**：`/` 在 CSS 識別字裡要寫成 `\/`。
+
+**代價**：`ct-button_filled-main-default` 比 `ct/button-filled/main/default`
+難掃視——`/` 版本視覺上會自動分組。這是明知的取捨。
+
+**S12 要驗一件事**：Tailwind 的 `_` → 空白轉換規則只作用於方括號裡的
+arbitrary value（`grid-cols-[1fr_2fr]`），具名 theme key 裡的 `_` 應該原樣保留。
+用一個真的含 `_` 的 class 實測確認，不要假設——靜默失敗會很難查。
+
+#### `cn()` 必須擴充 tailwind-merge ⭐
+
+```ts
+// apps/web/src/styles/cn.ts
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: { colors: Object.keys(exposedTokens) },
+    classGroups: { "font-size": typeRoles.map(r => `text-${r}`) },
+  },
+})
+export const cn = (...i: ClassValue[]) => twMerge(clsx(i))
+```
+
+**漏掉這步是個真實的坑**：自訂 color / fontSize key 沒註冊進 tailwind-merge，
+`cn('text-at-text-primary', 'text-at-text-muted')` 不會正確去重，兩個 class
+都會留著，最終顏色由 CSS 順序決定而不是由呼叫順序決定。
+
+v4 沒有 `tailwind.config.ts` 物件可以 `Object.keys()`，所以 key 清單必須
+**由 token build 一併產出**（`tokens.keys.ts`），`cn.ts` 從那裡讀。
+
+#### `ct/` 層保持最小
+
+`ct/` 只給少數複雜到需要的元件——主要是 `presentation/stage/`。
+**不預先生成大批 component token**（參考專案有 302 個，那是多 app 電商的規模）。
+`presentation/stage/` 也是全專案唯一允許手寫原生 CSS 的地方。
 
 ### 10.4 舞台層的例外（無論 CSS 方案為何都成立）
 
@@ -647,6 +740,21 @@ director 只寫 CSS 變數，CSS 決定怎麼呈現。這讓「換美術素材�
 ### 10.5 Typographic 機制（待建，先鎖住約束）
 
 採 **semantic type roles** 而非裸尺寸：`display / title / body / caption / numeric`。
+每個 role 綁定 `fontSize + lineHeight + fontWeight` 三件一組，不是裸尺寸值。
+
+#### Typography 也必須走 §10.3 的同一條 pipeline
+
+**不要手寫在樣式檔裡。** 參考專案的 color 有 style-dictionary 守著所以乾乾淨淨，
+但 `fontSize` 是手寫的，43 個 key 裡至少 8 個已經腐化：
+
+| 症狀 | 實例 |
+|---|---|
+| 拼錯 | `H5.mudium`（vs `H5.medium`）、`Caption.regualr`（vs `Caption.regular`） |
+| 大小寫重複 | `small.medium` / `Small.medium`、`button.xxlg` / `Button.xxlg` |
+| 命名不一致 | `H1.Bold` vs `H2.bold` |
+
+沒有 schema 驗證的 token 一定會長出錯字與重複。typography 進 token JSON，
+跟 color 共用同一次 build 與同一套驗證。
 
 三個繁體中文特有的坑，必須寫進 token 設計：
 
@@ -664,7 +772,214 @@ director 只寫 CSS 變數，CSS 決定怎麼呈現。這讓「換美術素材�
 演出裡有「資產數字跳動」，非等寬數字在 count-up 過程中會左右抖動，
 這是免費就能避免的廉價瑕疵。
 
+### 10.6 與參考專案（`@pcsc/tailwind-config`）的差異
+
+架構承襲自 `pcsc/f2e-uniopen/packages/tailwind-config`。**照抄的部分**：
+DTCG token JSON 當唯一真相、style-dictionary 生成、`gt`/`at`/`ct` 三層前綴、
+生成檔標記 `Do not edit directly`、`cn()` 擴充 tailwind-merge。
+
+**刻意偏離的五處**，每一處都有理由：
+
+| # | 參考專案 | 本專案 | 理由 |
+|---|---|---|---|
+| ① | gt/at/ct **全部**進 `theme.extend.colors` | **只有 at + ct** | 能繞過的地方就會被繞過。對方有設計系統團隊與 code review 撐著；本專案沒有，約束必須靠工具而非自律 |
+| ② | `fontSize` 手寫在 config 裡 | typography **進 token pipeline** | 對方 43 個 key 已腐化出錯字與大小寫重複（§10.5）。沒有驗證的 token 必然腐化 |
+| ③ | `/` 當層級分隔、`-` 當複合詞分隔（同字元兩種語意），另做 `black-opacity` 原色補償 alpha | **`-` 當層級、`_` 當複合詞**（兩個字元、各一種語意） | 一個字元兩種語意 → 機器無法區分 → 必須人工維護白名單（見 ④）。分開之後歧義消失，且拿回 `/50` 修飾符、免去 CSS 跳脫 |
+| ④ | CSS → 字串後處理生成 class 表（126 行，寫死 header 行數 + 30+ 項複合詞白名單） | **零轉換層**——DTCG nesting 經 style-dictionary 預設就是 `-` 串接、`_` 原樣保留 | 那 126 行與白名單是 ③ 的必然後果，不是獨立的實作缺陷。改掉分隔符，整段程式碼就不需要存在 |
+| ⑤ | 302 個 `ct` token | `ct` **保持最小**，只給 `presentation/stage/` | 對方是多 app 電商平台；本專案是單一文字遊戲。不為不存在的元件鋪路 |
+
+**版本落差**：參考專案是 Tailwind **v3**（`^3.4.17`、`tailwind.config.ts`、
+`theme.extend.colors`）。本專案是 **v4**（`@theme` directive、無 config 檔），
+所以 pipeline 的第二個輸出是 CSS `@theme` 區塊而非 JS 物件，
+且 `cn()` 的 key 清單必須由 build 一併產出（§10.3）。
+
 ---
+
+### 10.7 音效架構
+
+現階段**沒有任何音檔**，但整套排程、匯流排、節流、fallback 都要先做好，
+日後只需把檔案填進 manifest。
+
+#### 唯一入口：`playSound(actionId, opts?)`
+
+音效只有一個 API，**所有呼叫者共用它**——包含但不限於：director 的演出音效、
+按鈕 click、選項 selected、畫面過場、面板展開、數字結算。
+
+```ts
+type Bus = 'bgm' | 'sfx' | 'ui'
+type Priority = 'high' | 'normal'
+
+function playSound(
+  actionId: ActionId,                                    // 型別化 union，見下
+  opts?: { when?: number; bus?: Bus; priority?: Priority; dedupeMs?: number },
+): void
+```
+
+| 呼叫者 | 寫法 | 語意 |
+|---|---|---|
+| UI 元件 | `playSound('ui_option_select')` | 立即播、`ui` bus |
+| director | `playSound('event_crash', { when, bus: 'sfx', priority: 'high' })` | 排程播、對齊畫面節拍 |
+
+**單一 choke point 是重點**：找不到檔案就靜音、節流、去重、靜音狀態、
+加速/跳過策略——全部只有一個地方需要正確。
+
+**兩條路徑有一處行為必須分開**（由有沒有 `when` 區分）：
+
+| | 互動音效（無 `when`） | 演出音效（有 `when`） |
+|---|---|---|
+| 受 `rate(n)` 影響 | **不受** | 受（見下方表格） |
+| 被 `finish()` / 跳過取消 | **不取消** | **取消** |
+
+理由：使用者按按鈕的回饋音不該因為 director 正在快轉就消失——那會讓介面
+感覺壞掉。反之，跳過演出時排程中的演出音效必須清掉，否則是一陣噪音。
+
+#### Action id 的兩個來源
+
+| 類型 | 來源 | 可被 mod 覆寫？ | 例 |
+|---|---|---|---|
+| 互動音效 | **app 的靜態 manifest** | ❌ 介面音不屬於遊戲內容 | `ui_click`、`ui_option_select`、`ui_transition` |
+| 演出音效 | **內容包的 `assets.sfx`**（§6.4） | ✅ mod 作者要能為自己的事件配音 | `event_crash`、`dice_roll`、`trait_unlock` |
+
+兩者經同一個 `AudioResolver` 解析，只是來源合併。
+
+#### `ActionId` 必須是型別化的 union
+
+`playSound()` 能從任何地方呼叫，代價是**呼叫點散落、難以盤點**。
+不加約束的話，三個月後沒人知道存在哪些 id，然後開始長出 `ui_clik` 這種錯字——
+與 §10.5 那份 `fontSize` 長出 `H5.mudium` 是同一種腐化。
+
+所以 `ActionId` 由 manifest 產生型別，`playSound('clik')` 是**編譯期錯誤**，
+不是執行期靜默失敗。內容包來的 id 無法靜態檢查，改在**載入時**驗證
+（未知 id 只警告不拒載——音效缺失不該讓內容包整包失效）。
+
+#### 三條獨立的匯流排
+
+把 BGM 和 SFX 混在一起是這類系統最常見的錯誤——生命週期、並發數、
+音量控制、持久化偏好全都不同。
+
+| Bus | 內容 | 生命週期 | 並發 |
+|---|---|---|---|
+| `bgm` | 長循環背景樂（依人生階段／時代 phase 切換） | 跨場景存活，切換時交叉淡入淡出 | 同時只有 1 |
+| `sfx` | 演出音效（擲骰、翻牌、崩盤、成交、特性解鎖） | fire-and-forget | 多個並發，需節流 |
+| `ui` | 介面音（按鈕、切換） | 立即 | 多個並發 |
+
+每條 bus 一個 `GainNode`，音量與靜音是改 gain，不是逐一操作 source。
+
+#### 用 Web Audio API，不用 `<audio>` 元素
+
+理由與 §10.1 選 WAAPI 做視覺動態完全平行：
+
+- `AudioContext` + 預先 decode 的 `AudioBuffer` → `source.start(when)` 是
+  **取樣級精確排程**，能跟 director 的邏輯時間軸對齊
+- `<audio>` 元素的播放延遲不可預測，且大量並發會失控
+- 音量／靜音／淡入淡出走 `GainNode`，天生可組合
+
+#### ⚠️ Autoplay 政策是頭號坑
+
+瀏覽器在使用者手勢之前不允許播放音訊，`AudioContext` 會停在 `suspended`。
+**後果極具欺騙性**：開發時你點過畫面所以一切正常，新訪客進來完全沒聲音，
+而且**不會拋任何錯誤**。
+
+必須做到：
+
+- 首次使用者手勢時呼叫 `audioContext.resume()`
+- 標題頁的「開始人生」按鈕天然就是那個手勢——把 unlock 綁在那裡
+- 仍要有獨立的靜音／取消靜音控制，同時作為 unlock 的備援路徑
+- `context.state === 'suspended'` 時，UI 要**明確顯示「點一下開啟音效」**，
+  不要假裝在播
+
+#### 跳過與加速時聲音怎麼辦
+
+director 有 `rate(n)` 與 `finish()`（§4）。**聲音不能跟著變速**——4× 音高
+聽起來就是壞掉。規則必須先定，事後補會很痛：
+
+**只作用於排程音效（有 `when`）。`ui` bus 完全不受下表影響。**
+
+| director 狀態 | `bgm` | `sfx`（排程） | `ui`（互動） |
+|---|---|---|---|
+| 正常播放 | 正常 | 照排程播 | 立即播 |
+| `rate(n)` 任何倍率 | 正常速度、不變調 | **靠 debounce 自然稀釋**（見下） | 不受影響 |
+| `finish()` / 跳過 | 正常 | **取消排程中的 `normal`**；`high` 可存活（見下） | 不受影響 |
+| `seek()` 往回 | 正常 | 不重播（避免回捲時的音爆） | 不受影響 |
+
+#### Debounce 取代了「按倍率過濾」
+
+原本這裡有一條「`rate > 2` 只播 `priority: 'high'`」的規則，**已刪除**。
+理由：加速時同樣的事件本來就變 n 倍密，一個 leading-edge 的時間窗過濾器
+天然就把它們稀釋掉——不需要另外維護一份「哪些音效算重要」的人工分類表。
+一個機制取代一套分類。
+
+**必須是 leading-edge，不是 trailing：**
+
+```
+leading  ── 立刻發聲，然後在 dedupeMs 內抑制同 id 的重複   ✅
+trailing ── 等安靜了才發聲                                 ❌ click 音會遲到，手感壞掉
+```
+
+「debounce」一般用法多指 trailing。音效要的是前者；方向搞反就是延遲感。
+
+- 去重是 **per-id** 的，不同 id 互不影響
+- 預設 `dedupeMs` 由 manifest 逐 id 設定（短促的 UI 音給小值，
+  長尾的演出音給大值）
+
+#### ⚠️ Debounce 解決不了跳過
+
+per-id 去重對跳過**完全無效**：`finish()` 收合到同一瞬間的是幾十個
+**不同的** id，每一個都是它自己的「第一次」，沒有任何一個會被抑制。
+結果是最多 8 個（全域併發上限）不同音效同時響——一個和弦式的噪音爆。
+
+**所以排程取消那條規則必須獨立存在，debounce 取代不了它。**
+
+#### `priority` 的角色已降級
+
+不再負責倍率過濾，只剩兩個用途：
+
+1. 全域併發上限（8）爆掉時，**先丟 `normal`**
+2. `finish()` / 跳過時，**讓少數 `high` 存活**——按下跳過，玩家還是會想聽到
+   結算那一下的定音，而不是完全靜默
+
+因此 `SceneHint` 的 `scene.sfx` 需要兩個額外欄位：
+
+```ts
+{ type: 'scene.sfx'; id: string; priority?: 'high' | 'normal'; dedupeMs?: number }
+```
+
+**節流**：同時播放上限（起始值 8），超過就丟掉最舊的 `normal` 優先度。
+「資產數字跳動」這類每 frame 都想發音的演出，光靠 per-id debounce 不夠
+（它們可能是不同 id），還需要這道全域上限。
+
+#### ⚠️ 音效的隨機變體絕不可碰 `SeededRng`
+
+「同一個音效隨機挑 3 個變體之一」聽起來無害，但如果那個隨機從
+`SeededRng` 的任何 stream 取值，就會污染序列，讓**同種子跑出不同人生**（§5.2）。
+
+音效變體的隨機必須來自 **presentation 層自己的、非種子的** 亂數。
+這是 §5.3 那條 lint 規則保護不到的地方——`presentation/` 允許用 `Math.random()`，
+所以編譯器不會擋。**紀律靠這一行文件與 code review。**
+
+更一般的規則：**音效屬於 `SceneHint`，永遠不影響 state**（§6.3）。
+
+#### 素材缺失的 fallback
+
+`AudioResolver` 是 `AssetResolver`（§6.3）的孿生：id → `AudioBuffer`。
+
+- 找不到 id → **什麼都不做**。不報錯、不崩潰、production 不印警告
+- dev 模式下 `console.debug('[audio] would play: dice_roll')`，
+  這樣**現在就能開發並驗證時序與呼叫點**，不需要任何音檔
+- 日後把檔案填進 manifest 就有聲音，`domain/` 與 director 一行都不用改
+
+**副產品**：dev 模式蒐集到的 would-play 清單**就是音效需求清單**。
+不必先憑空想「我需要哪些音效」——玩過一輪，程式會告訴你。
+S15 要提供一個把它匯出成清單的方式。
+
+#### 格式與體積
+
+零後端靜態部署，總體積要控制。第一版 manifest **同時支援兩種來源**：
+
+- 獨立檔案（`{ id, url }`）——補素材最方便，適合開發期
+- audio sprite（`{ id, url, offset, duration }`）——一檔多音效，減少請求數
+
+先用獨立檔案；等音效數量多到請求數有感再打包成 sprite，manifest 格式不用改。
 
 ## 11. 不重複 yakyulife 的四個錯誤
 

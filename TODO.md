@@ -78,18 +78,53 @@
 
 ## 5. 美術與音效素材
 
-**狀態**：延後。第一版無素材，全部 fallback 渲染。
+**狀態**：**素材**本身延後（第一版全靠 fallback）。
+但承載素材的兩套基礎設施**不延後**——已排入 `PLAN.md` S14（視覺）與 **S15（音效）**。
 
-**現在必須先做到的邊界**：
+### 5a · 視覺邊界（S14 交付）
 
-- [ ] `AssetResolver` 存在且所有視覺／聽覺資源**只透過 id 引用**，不得硬編碼路徑
-- [ ] 每種資源型別都有 fallback：角色→名字色塊、背景→漸層、SFX→靜音、FX→CSS 動畫
-- [ ] `AudioBus` 存在但為 no-op 實作
-- [ ] `SceneHint` 與 `StateEffect` 已分離（見 `DESIGN.md` §6.3）；
-      補素材不需要動 `domain/`
+- [ ] `AssetResolver` 存在，所有視覺資源**只透過 id 引用**，不得硬編碼路徑
+- [ ] 每種型別都有 fallback：角色→名字色塊、背景→漸層、FX→CSS 動畫
+- [ ] `SceneHint` 與 `StateEffect` 已分離（`DESIGN.md` §6.3）；補素材不需動 `domain/`
 - [ ] director 支援 skip / 速度倍率，且**演出長度不影響模擬結果**
 
-**補素材時才需要的**：立繪、背景、SFX、BGM、可能的 Spine／sprite sheet 播放器。
+### 5b · 音效邊界（S15 交付，依據 `DESIGN.md` §10.7）
+
+音效**不是「AssetResolver 的音檔版」**，它有三個視覺素材沒有的問題：
+
+- [ ] **`playSound(actionId, opts?)` 是全專案唯一入口**——互動音效（click、
+      option selected、過場）與 director 的演出音效共用它，差別只在有沒有 `when`
+- [ ] **`ui` bus 不受 `rate`/`finish` 影響**（按鈕回饋音不該因快轉或跳過而消失）
+- [ ] **`ActionId` 是從 manifest 產生的型別化 union**，打錯字在編譯期就爆
+      （否則會長出 `ui_clik`，與 §10.5 那些 `H5.mudium` 是同一種腐化）
+- [ ] 兩個 id 來源：互動音效在 app 靜態 manifest（mod 不可覆寫）、
+      演出音效在內容包 `assets.sfx`（mod 可自帶，未知 id 只警告不拒載）
+- [ ] 三條獨立匯流排 `bgm` / `sfx` / `ui`，各一個 `GainNode`
+      （BGM 與 SFX 混在一起是這類系統最常見的錯誤）
+- [ ] 用 Web Audio API（取樣級精確排程），**不用 `<audio>` 元素**
+- [ ] `AudioResolver`：缺素材就靜音，dev 模式印 would-play，**零音檔即可開發時序**
+- [ ] **Autoplay unlock 流程**：首次手勢 `resume()`；`suspended` 時 UI 有明確提示。
+      這個 bug 開發時看不到（你點過畫面），只有新訪客會中
+- [ ] **Leading-edge debounce**（不是 trailing——trailing 會讓 click 音遲到）。
+      per-id、`dedupeMs` 由 manifest 逐 id 設定。加速時靠它自然稀釋，
+      **不需要**按倍率過濾的規則
+- [ ] ⚠️ **但 debounce 解決不了跳過**：`finish()` 收合的是幾十個**不同** id，
+      per-id 去重對它們無效。跳過取消（`normal` 取消、`high` 存活）
+      與全域併發上限 8 必須獨立實作
+- [ ] BGM 一律正常速度、不變調；`seek()` 往回不重播
+- [ ] `priority` 只用於「併發上限爆掉時先丟 normal」與「跳過時讓 high 存活」，
+      **不用於倍率過濾**
+- [ ] ⚠️ **音效的隨機變體不得從 `SeededRng` 取值**——否則同種子會跑出不同人生。
+      `presentation/` 允許 `Math.random()`，所以 §5.3 的 lint 擋不到這裡
+- [ ] manifest 同時支援獨立檔案與 audio sprite（先用獨立檔案）
+- [ ] 缺檔就**什麼都不做**（不報錯、production 不印警告），
+      dev 模式印 would-play 並可匯出清單
+
+> 💡 **would-play 清單就是音效需求清單。** 不必先憑空想「我需要哪些音效」——
+> 玩過一輪，程式會告訴你有哪些 action id 在等音檔。
+
+**補素材時才需要的**：立繪、背景、SFX 音檔、BGM 曲目、
+可能的 Spine／sprite sheet 播放器、audio sprite 打包。
 
 ---
 
@@ -136,20 +171,34 @@
 
 ## 9. Design Token 三層 + Typographic 機制
 
-**狀態**：已決定要做，尚未動工。架構已定於 `DESIGN.md` §10.3 / §10.5。
+**狀態**：**不再延後——已排入 `PLAN.md` S12**。
+架構定於 `DESIGN.md` §10.3（pipeline）、§10.5（typography）、§10.6（與參考專案的差異）。
+`packages/tokens` 從第一天就獨立成 package（理由見 §10.2），此項不再是待決。
 
-**現在必須先做到的邊界**：
+**S12 必須守住的紀律**（完整判準在 `PLAN.md` S12）：
 
-- [ ] Tailwind `@theme` 裡**只放 alias 層**，global 原色留在 `:root`。
-      這條一旦破了（原色進 `@theme`），三層架構就只是註解而非強制
-- [ ] 主題切換一律靠覆寫 alias 變數，component 與 utility 不得直接引用 global
-- [ ] type role 是語意名（`display`/`title`/`body`/`caption`/`numeric`），不是 `text-lg`
+- [ ] `@theme` 只收 `at` + `ct`；`gt` 留在 `:root` 但**不生成 utility**。
+      這條一旦破了，三層架構就只是註解而非強制
+- [ ] 主題切換只覆寫 `--at-*`；任何主題都不得修改 `--gt-*`
+- [ ] typography 走同一條 token pipeline，**不手寫在樣式檔裡**（§10.5 的腐化證據）
 - [ ] `numeric` role 含 `font-variant-numeric: tabular-nums`
+- [ ] `cn()` 的 tailwind-merge 擴充有測試證明去重生效（漏掉會靜默壞掉）
+- [ ] 生成流程是一次 build 兩個 custom format 消費同一份 AST，
+      **不是** CSS 字串後處理（§10.6 ④）
 
-**尚未決定，要做之前得拍板**：
+**S12 動工前得拍板的兩件事**：
 
 - [ ] **字體**：系統字體 stack（0 KB）／webfont + subset／動態 subset。
       注意與 UGC 的衝突——內容包會帶進事前未知的字，subset 策略天生矛盾。
       建議傾向系統字體 stack，把 webfont 留給標題等少量固定文字
-- [ ] 尺寸階梯：模組化比例（1.2／1.25）還是手挑各階
-- [ ] `packages/tokens` 何時抽出（觸發條件：出現第二個消費端，例如編輯器 app）
+- [ ] **尺寸階梯**：模組化比例（1.2／1.25）還是手挑各階
+
+**已決定，記錄理由**：
+
+- **分隔符：`-` 為層級、`_` 為同層級內的複合詞**（不採參考專案的 `/`）。
+  換到三件事：`/50` alpha 修飾符可用、`@theme` 不需 CSS 跳脫、
+  以及**整個轉換層消失**（參考專案那 126 行腳本與 30+ 項複合詞白名單，
+  是「同一個 `-` 既當層級又當複合詞」造成的，換成兩個字元就不存在了）。
+  代價是長名稱較難掃視，明知取捨。
+- 連帶約束：**token JSON 的 key 不得含 `-`**，否則命名失去機器可逆性。
+  由 build 驗證，違反就失敗。

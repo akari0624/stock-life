@@ -227,6 +227,42 @@ describe('Director 投影', () => {
     expect(director.getStage().say?.done).toBe(true)
   })
 
+  it('沒有換場景的那幾段演出，舞台維持上一場的樣子', () => {
+    // 一年裡多數 command（分配骰點、推進一年）不發任何 scene.*——如果每次
+    // load() 都把舞台清空，玩家有三分之二的時間在看一個空盒子。
+    const { clock, director } = setup()
+    director.play()
+    clock.runUntil(() => director.isFinished())
+    expect(director.getStage().bg).toBe('office')
+
+    // 只有數值變化的一段：背景還在
+    director.load(compile([{ type: 'stat.add', key: 'capital', value: 10 }]))
+    expect(director.getStage().bg).toBe('office')
+
+    // 完全空的一段（推進一年）：一樣還在
+    director.load(compile([]))
+    expect(director.getStage().bg).toBe('office')
+  })
+
+  it('但真的換了場景，上一場的人物就撤掉', () => {
+    const clock = new FakeClock()
+    const director = new Director(clock.options)
+    director.load(
+      compile([
+        { type: 'scene.bg', id: 'office' },
+        { type: 'scene.actor', id: 'colleague', at: 'left' },
+      ]),
+    )
+    director.play()
+    clock.runUntil(() => director.isFinished())
+    expect(director.getStage().actors.map((actor) => actor.id)).toEqual(['colleague'])
+
+    director.load(compile([{ type: 'scene.bg', id: 'hospital' }]))
+    const stage = director.getStage()
+    expect(stage.bg).toBe('hospital')
+    expect(stage.actors).toEqual([])
+  })
+
   it('getStage 在沒有變化時回傳同一個物件（useSyncExternalStore 的要求）', () => {
     const { director } = setup()
     const first = director.getStage()

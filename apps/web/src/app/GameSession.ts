@@ -123,6 +123,11 @@ export class GameSession {
     // 重播的自動前進：一段演完了才演下一段
     this.unbindDirector = this.director.subscribe(() => this.onDirectorChange())
 
+    // 開場先佈一個景：否則第一個事件結算之前，舞台是一個純黑的方塊。
+    // 之後每一段演出都靠 director 的 carry 接住（見 StageCarry）。
+    this.director.load(compile([{ type: 'scene.bg', id: 'life_start' }]))
+    this.director.play()
+
     if (options.restore) this.fastForward(options.restore)
     if (options.replay) {
       this.mode = 'replay'

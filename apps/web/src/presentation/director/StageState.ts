@@ -67,10 +67,39 @@ export interface StageMeta {
   finished: boolean
 }
 
+/**
+ * 上一段演出留在舞台上的東西。
+ *
+ * 一次 dispatch 只編出「這一批 effects」的演出，而一年裡多數的 command
+ * （分配骰點、推進一年）根本不發任何 `scene.*`——沒有這個 carry，事件演完
+ * 之後舞台就會整個清空，玩家有三分之二的時間在看一個空盒子。
+ *
+ * 規則只有一條：**新的一段演出有換場景（`scene.bg`）才算重新佈景**，
+ * 換了就連上一場的人物一起撤掉；沒換就維持原樣，只是這一場沒發生什麼。
+ */
+export interface StageCarry {
+  bg?: string
+  actors: ActorSlot[]
+}
+
+export const EMPTY_CARRY: StageCarry = { actors: [] }
+
+/** 從一個投影取出「該留在台上」的部分（進度一律視為演完）。 */
+export function carryFrom(stage: StageState): StageCarry {
+  const carry: StageCarry = { actors: stage.actors.map((actor) => ({ ...actor, progress: 1 })) }
+  if (stage.bg !== undefined) carry.bg = stage.bg
+  return carry
+}
+
 const isActive = (scene: Scene, time: number): boolean =>
   scene.duration > 0 && time >= scene.start && time <= sceneEnd(scene)
 
-export function project(plan: ScenePlan, time: number, meta: StageMeta): StageState {
+export function project(
+  plan: ScenePlan,
+  time: number,
+  meta: StageMeta,
+  carry: StageCarry = EMPTY_CARRY,
+): StageState {
   const stage: StageState = {
     time,
     duration: plan.duration,
@@ -88,6 +117,8 @@ export function project(plan: ScenePlan, time: number, meta: StageMeta): StageSt
 
   const actorSlots = new Map<'left' | 'right', ActorSlot>()
   let lastSay: Scene | undefined
+  /** 這一段演出自己有沒有佈景——決定要不要沿用上一場的舞台 */
+  let dressedByPlan = false
 
   for (const scene of plan.scenes) {
     const started = time >= scene.start
@@ -97,6 +128,7 @@ export function project(plan: ScenePlan, time: number, meta: StageMeta): StageSt
         if (started) {
           stage.bg = scene.id
           stage.bgProgress = progressAt(scene, time)
+          dressedByPlan = true
         }
         break
 
@@ -149,6 +181,17 @@ export function project(plan: ScenePlan, time: number, meta: StageMeta): StageSt
       case 'bgm':
         // 瞬間 cue，不進投影——由 director 的 onCue 發出去（S15）
         break
+    }
+  }
+
+  // 沒有換場景 → 上一場的背景與人物都還在（見 StageCarry）
+  if (!dressedByPlan) {
+    if (carry.bg !== undefined) {
+      stage.bg = carry.bg
+      stage.bgProgress = 1
+    }
+    for (const actor of carry.actors) {
+      if (!actorSlots.has(actor.at)) actorSlots.set(actor.at, actor)
     }
   }
 

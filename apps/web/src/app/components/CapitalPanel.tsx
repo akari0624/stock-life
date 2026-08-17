@@ -1,6 +1,6 @@
 import type { PlayerView } from '@stock-life/engine'
 import type { StageState } from '../../presentation/director/StageState.ts'
-import { ERA_LABELS, int, money, percent } from '../format.ts'
+import { ERA_LABELS, int, money, percent, themeLabel, year } from '../format.ts'
 import { CARD } from '../ui.ts'
 import { cn } from '../../styles/cn.ts'
 
@@ -57,11 +57,11 @@ export function CapitalPanel({ view, stage }: Props) {
     <section className={cn(CARD, 'p-4')}>
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-title text-at-text-primary">
-          {int(view.year)} 年 · {player.age} 歲
+          {year(view.year)} 年 · {player.age} 歲
         </h2>
         <span className="text-caption text-at-text-muted">
           {ERA_LABELS[view.era.phase] ?? view.era.phase}
-          {view.era.themes.length > 0 && ` · ${view.era.themes.join('、')}`}
+          {view.era.themes.length > 0 && ` · ${view.era.themes.map(themeLabel).join('、')}`}
         </span>
       </header>
 

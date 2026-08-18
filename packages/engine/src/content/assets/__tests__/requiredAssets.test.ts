@@ -59,10 +59,14 @@ describe('collectRequiredAssets', () => {
     expect(required.sfx[0]).toMatchObject({ id: 'chime', count: 3, usedBy: ['e1', 'o1', 't1'] })
   })
 
-  it('引擎自己會發的 id 也要算進去，否則清單天生短兩筆', () => {
+  it('引擎自己會發的開場佈景要算進去，否則清單天生短一筆', () => {
     const required = collectRequiredAssets(content())
     expect(required.bg.map((usage) => usage.id)).toContain(OPENING_BG)
-    expect(required.actor.map((usage) => usage.id)).toContain(NARRATOR_ACTOR)
+  })
+
+  it('旁白不算素材：它是對話框的名字，不是舞台上的角色', () => {
+    const required = collectRequiredAssets(content())
+    expect(required.actor.map((usage) => usage.id)).not.toContain(NARRATOR_ACTOR)
   })
 
   it('manifest 給了檔案才算 provided——只有 label 仍然是色塊', () => {
@@ -120,7 +124,7 @@ describe('core-tw 的素材需求', () => {
     expect(withoutBg.map((event) => event.id)).toEqual([])
   })
 
-  it('清單數得出來，而且現在全部都還在跑 fallback（TODO #5）', async () => {
+  it('清單數得出來，而且視覺素材已經全部有檔案', async () => {
     const result = await loadContentPack(createCoreTwSource())
     if (!result.ok) throw new Error('core-tw failed to load')
 
@@ -130,9 +134,12 @@ describe('core-tw 的素材需求', () => {
     expect(required.bg.length).toBeGreaterThan(40)
     expect(required.actor.length).toBeGreaterThan(15)
     expect(required.sfx.length).toBeGreaterThan(15)
-    // manifest.assets 是空的，所以需求 = 缺口。補圖之後這條會自己往下掉。
-    expect(missingAssets(required)).toHaveLength(
-      required.bg.length + required.actor.length + required.sfx.length + required.fx.length,
-    )
+
+    // 每個被用到的背景與角色都對照得到檔案。少畫一張這裡就會指名它。
+    const uncovered = missingAssets(required).filter((usage) => usage.kind === 'bg' || usage.kind === 'actor')
+    expect(uncovered.map((usage) => `${usage.kind}:${usage.id}`)).toEqual([])
+
+    // 音效還沒有素材（TODO #5b），fx 永遠是 CSS 動畫——這兩類仍然是「缺」
+    expect(missingAssets(required)).toHaveLength(required.sfx.length + required.fx.length)
   })
 })

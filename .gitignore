@@ -25,3 +25,4 @@ schema-export
 *.sln
 *.sw?
 packages/tokens/dist/
+art-out/

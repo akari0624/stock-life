@@ -4,12 +4,14 @@ import { coreTwEvents } from './events.js'
 import { coreTwOpportunities } from './opportunities.js'
 import { coreTwCareerGraph } from './careerGraph.js'
 import { coreTwTraits } from './traits.js'
+import { coreTwAssets } from './assets.js'
 
 // §6.4. `provides` 從實際的陣列算出來，不是手寫的數字——內容長大時它自己
 // 跟著長，「manifest 宣告的」與「包裡真的有的」不可能對不上。
 //
-// `assets` 是空的：第一版沒有任何素材，全部走 AssetResolver 的 fallback
-// （S14／TODO #5）。美術補進來的時候只要往這裡加 id → 檔名，domain 零改動。
+// `assets` 來自 `assets.ts`，那個檔案是 `art:install` 產生的（見 ART.md）。
+// 沒有對照到檔案的 id 仍然走 AssetResolver 的 fallback（§6.3），所以這份表
+// 可以只補一半——補多少就有多少張真圖，domain 零改動。
 
 export const coreTwManifest = {
   id: 'core-tw',
@@ -26,5 +28,5 @@ export const coreTwManifest = {
     worldGenerators: [],
   },
   requires: [],
-  assets: { actors: {}, bg: {}, sfx: {} },
+  assets: coreTwAssets,
 }

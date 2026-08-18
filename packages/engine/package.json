@@ -13,6 +13,10 @@
     "lint": "eslint src/",
     "schema:export": "tsx scripts/exportSchema.ts",
     "assets": "tsx scripts/assets.ts",
+    "art": "tsx scripts/art.ts",
+    "art:gen": "tsx scripts/artGen.ts",
+    "art:sheet": "tsx scripts/artSheet.ts",
+    "art:install": "tsx scripts/artInstall.ts",
     "balance": "tsx scripts/balance.ts",
     "test:balance": "tsx scripts/balance.ts --runs 200"
   },

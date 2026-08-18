@@ -123,6 +123,11 @@
 > `--manifest` 直接吐出可貼進 `manifest.assets` 的骨架，填檔名就有圖。
 > 這跟 5b 的 would-play 是同一招，差別只在視覺這邊**不必先玩過一輪**——
 > 靜態掃內容就數得完，玩一輪反而只會走到抽得到的那些。
+>
+> 要畫什麼、檔名叫什麼、prompt 是什麼，都在根目錄的 **`ART.md`**（產生的，別手改）：
+> `pnpm --filter engine run art [-- --style <id>]`。題材在 `scripts/art/subjects.ts`、
+> 畫風在 `scripts/art/styles.ts`——**畫風是一個變數**，換一次七十一條 prompt 一起換，
+> 不然同一批圖永遠對不齊。內容新增背景而 subject 沒補，那支會失敗並指名，清單不會默默過期。
 
 ### 5b · 音效邊界（S15 交付，依據 `DESIGN.md` §10.7）
 

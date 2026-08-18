@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { createCoreTwSource, loadContentPack, type Manifest } from '@stock-life/engine'
 import { AssetResolver, FX_ANIMATIONS, hashId, labelFor } from '../AssetResolver.ts'
@@ -111,7 +113,7 @@ describe('塞一張圖進 manifest', () => {
 })
 
 describe('官方內容包（零素材）', () => {
-  it('core-tw 的所有 scene id 都解析得出東西', async () => {
+  it('core-tw 的背景與角色都解析到真的檔案，fx 仍然是 CSS 動畫', async () => {
     const loaded = await loadContentPack(createCoreTwSource())
     if (!loaded.ok) throw new Error('core-tw failed to load')
 
@@ -124,13 +126,37 @@ describe('官方內容包（零素材）', () => {
 
     expect(ids.length).toBeGreaterThan(0)
     for (const scene of ids) {
-      if (scene.bg) expect(resolver.bg(scene.bg)?.source).toBe('fallback')
-      if (scene.actor) expect(resolver.actor(scene.actor)?.source).toBe('fallback')
+      if (scene.bg) {
+        expect(resolver.bg(scene.bg)?.source).toBe('manifest')
+        expect(resolver.bg(scene.bg)?.url).toMatch(/^\/art\/bg\/.+\.webp$/)
+      }
+      if (scene.actor) {
+        expect(resolver.actor(scene.actor)?.source).toBe('manifest')
+        expect(resolver.actor(scene.actor)?.url).toMatch(/^\/art\/actors\/.+\.webp$/)
+      }
       if (scene.fx) expect(FX_ANIMATIONS).toContain(resolver.fx(scene.fx)?.animation)
     }
 
-    // dev 的美術需求清單：問過但沒素材的 id
-    expect(resolver.missing().length).toBeGreaterThan(0)
-    expect(resolver.missing().every((item) => item.section === 'actors' || item.section === 'bg')).toBe(true)
+    // 素材補齊了，dev 的需求清單就該是空的——少畫一張它會立刻指名
+    expect(resolver.missing()).toEqual([])
+  })
+})
+
+// manifest 裡的路徑是**字串**，型別檢查不到，測試也很容易只驗到「有值」。
+// 真正會出事的是路徑拼錯或檔案沒 commit——那在瀏覽器上是靜默的破圖。
+describe('manifest 宣告的每個檔案都真的存在', () => {
+  it('core-tw 的 assets 全部對得到 public/ 裡的檔案', async () => {
+    const loaded = await loadContentPack(createCoreTwSource())
+    if (!loaded.ok) throw new Error('core-tw failed to load')
+
+    const publicDir = path.resolve(import.meta.dirname, '../../../../public')
+    const urls = [
+      ...Object.values(loaded.pack.manifest.assets.bg),
+      ...Object.values(loaded.pack.manifest.assets.actors),
+    ].filter((value): value is string => typeof value === 'string' && value.length > 0)
+
+    expect(urls.length).toBeGreaterThan(60)
+    const missing = urls.filter((url) => !existsSync(path.join(publicDir, url)))
+    expect(missing).toEqual([])
   })
 })

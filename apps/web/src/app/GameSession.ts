@@ -1,6 +1,7 @@
 import {
   encodeShareCode,
   nextDecision,
+  OPENING_BG,
   summariseLife,
   type Command,
   type Decision,
@@ -125,7 +126,7 @@ export class GameSession {
 
     // 開場先佈一個景：否則第一個事件結算之前，舞台是一個純黑的方塊。
     // 之後每一段演出都靠 director 的 carry 接住（見 StageCarry）。
-    this.director.load(compile([{ type: 'scene.bg', id: 'life_start' }]))
+    this.director.load(compile([{ type: 'scene.bg', id: OPENING_BG }]))
     this.director.play()
 
     if (options.restore) this.fastForward(options.restore)

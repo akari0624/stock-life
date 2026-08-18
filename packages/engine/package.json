@@ -12,6 +12,7 @@
     "test": "vitest run",
     "lint": "eslint src/",
     "schema:export": "tsx scripts/exportSchema.ts",
+    "assets": "tsx scripts/assets.ts",
     "balance": "tsx scripts/balance.ts",
     "test:balance": "tsx scripts/balance.ts --runs 200"
   },

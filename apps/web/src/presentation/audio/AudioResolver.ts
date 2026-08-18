@@ -1,3 +1,4 @@
+import { withBase } from '../basePath.ts'
 import type { AssetManifest } from '../assets/AssetManifest.ts'
 import { UI_SOUNDS, isUiActionId, type SoundEntry } from './uiSounds.ts'
 import type { Bus, Priority } from './types.ts'
@@ -57,7 +58,8 @@ export class AudioResolver {
   resolve(id: string): ResolvedSound | undefined {
     const entry: SoundEntry | undefined = isUiActionId(id) ? UI_SOUNDS[id] : this.contentEntry(id)
     if (!entry?.url) return undefined
-    return { id, ...entry }
+    // 音檔跟圖一樣要接 base，否則子路徑部署時抓不到（見 basePath.ts）
+    return { id, ...entry, url: withBase(entry.url) }
   }
 
   /** 已知的 id（dev 測試頁列表用）。 */

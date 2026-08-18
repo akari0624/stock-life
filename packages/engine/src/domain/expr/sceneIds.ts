@@ -17,10 +17,16 @@ export const NARRATOR_ACTOR = 'narrator'
  */
 export const OPENING_BG = 'life_start'
 
-/** Grouped the way `SceneRef` names its fields, for the asset collector. */
+/**
+ * Grouped the way `SceneRef` names its fields, for the asset collector.
+ *
+ * `NARRATOR_ACTOR` is deliberately **not** here: it is a speaker label in the
+ * dialogue box, never an actor slot on the stage, so it needs a display name
+ * and no artwork. Listing it would put a phantom entry on the art to-do list.
+ */
 export const BUILTIN_SCENE_IDS = {
   bg: [OPENING_BG],
-  actor: [NARRATOR_ACTOR],
+  actor: [],
   sfx: [],
   fx: [],
 } as const satisfies Record<'bg' | 'actor' | 'sfx' | 'fx', readonly string[]>

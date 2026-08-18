@@ -137,6 +137,22 @@ export {
   type MergedContent,
   type MergeResult,
 } from './content/loader/merge.js'
+export {
+  NARRATOR_ACTOR,
+  OPENING_BG,
+  BUILTIN_SCENE_IDS,
+} from './domain/expr/sceneIds.js'
+export {
+  collectRequiredAssets,
+  missingAssets,
+  assetManifestSkeleton,
+  hasAssetFile,
+  ASSET_KINDS,
+  type AssetKind,
+  type AssetUsage,
+  type AssetRequirements,
+  type CollectAssetsOptions,
+} from './content/assets/requiredAssets.js'
 export { createCoreTwSource } from './content/packs/core-tw/index.js'
 
 export type { GameSystem, SystemCtx, Phase } from './domain/systems/GameSystem.js'

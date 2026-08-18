@@ -117,6 +117,13 @@
       → S13 交付。`play/pause/rate/seek/finish`，並用真的跑完一局
       （跳過 vs 播完 vs 完全不演）比對最終 state 相同
 
+> 💡 **美術需求清單是算出來的，不是手寫的。** scene id 就近寫在事件旁邊（§6.3），
+> 所以沒有任何一個檔案「列出全部背景」——`pnpm --filter engine run assets` 就是那份
+> 清單：每個 bg／actor／sfx／fx id 被幾筆內容用到、誰用它、manifest 給檔案了沒。
+> `--manifest` 直接吐出可貼進 `manifest.assets` 的骨架，填檔名就有圖。
+> 這跟 5b 的 would-play 是同一招，差別只在視覺這邊**不必先玩過一輪**——
+> 靜態掃內容就數得完，玩一輪反而只會走到抽得到的那些。
+
 ### 5b · 音效邊界（S15 交付，依據 `DESIGN.md` §10.7）
 
 音效**不是「AssetResolver 的音檔版」**，它有三個視覺素材沒有的問題：

@@ -401,6 +401,10 @@ domain 一行都不用改。
 - `engineApi` / `facadeVersion` 不相容就**拒絕載入並說明原因**
 - **官方內容包走跟 mod 完全一樣的載入器**（dogfooding）。
   這樣結構上就不可能出現「官方做得到但 mod 做不到」的事。
+- `assets` 是**供給側**（id → 檔案），可以是空的：缺的一律走 fallback（§6.3）。
+  **需求側不另外手寫一份清單**——哪些 id 真的被用到，由 `collectRequiredAssets()`
+  掃內容算出來（`pnpm --filter engine run assets`）。兩份清單各寫一次就會對不上，
+  跟 `provides` 從陣列長度算出來是同一個理由。
 
 ---
 

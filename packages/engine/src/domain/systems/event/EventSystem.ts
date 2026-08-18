@@ -5,6 +5,7 @@ import type { FacadeField } from '../../facade/FacadeField.js'
 import type { RngStream } from '../../rng/SeededRng.js'
 import { addStat } from '../../state/stats.js'
 import { isSatisfied } from '../../expr/evaluate.js'
+import { NARRATOR_ACTOR } from '../../expr/sceneIds.js'
 import { findChoice, successChance, type EventDef } from './EventDef.js'
 import type { PendingEvent } from './PendingEvent.js'
 import { applyContentEffects, type ContentEffectDeps } from '../content/applyContentEffects.js'
@@ -99,7 +100,7 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
     if (event.scene.bg) ctx.emit({ type: 'scene.bg', id: event.scene.bg })
     if (event.scene.actor) ctx.emit({ type: 'scene.actor', id: event.scene.actor })
     if (event.prompt) {
-      ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? 'narrator', text: event.prompt })
+      ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? NARRATOR_ACTOR, text: event.prompt })
     }
   }
 
@@ -119,7 +120,7 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
 
     // The stage was already dressed when the event was presented, and the
     // director keeps it between plans — so this half only speaks the outcome.
-    ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? 'narrator', text: outcome.text })
+    ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? NARRATOR_ACTOR, text: outcome.text })
     if (event.scene.sfx) ctx.emit({ type: 'scene.sfx', id: event.scene.sfx })
     if (event.scene.fx) ctx.emit({ type: 'scene.fx', id: event.scene.fx })
 

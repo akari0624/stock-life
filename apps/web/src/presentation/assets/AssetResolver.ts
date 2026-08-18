@@ -4,6 +4,7 @@ import {
   type AssetEntry,
   type AssetManifest,
 } from './AssetManifest.ts'
+import { withBase } from '../basePath.ts'
 import type { Manifest } from '@stock-life/engine'
 
 /**
@@ -106,7 +107,7 @@ export class AssetResolver {
       kind: 'actor',
       id,
       source,
-      url: entry?.url,
+      url: entry?.url ? withBase(entry.url) : undefined,
       label: entry?.label ?? labelFor(id),
       hue: hashId(id) % 360,
     }
@@ -121,7 +122,7 @@ export class AssetResolver {
       kind: 'bg',
       id,
       source,
-      url: entry?.url,
+      url: entry?.url ? withBase(entry.url) : undefined,
       hue: hashId(id) % 360,
     }
   }

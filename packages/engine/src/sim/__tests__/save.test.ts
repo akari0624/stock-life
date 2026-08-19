@@ -78,7 +78,7 @@ describe('save format', () => {
     expect(save.schemaVersion).toBe(SAVE_SCHEMA_VERSION)
     expect(save.seed).toBe('save-shape')
     expect(save.fingerprint).toBe(life.fingerprint)
-    expect(save.packs).toEqual([{ id: 'core-tw', version: '1.0.0' }])
+    expect(save.packs).toEqual([{ id: coreTwManifest.id, version: coreTwManifest.version }])
     expect(save.commandLog).toEqual([...life.sim.getCommandLog()])
 
     // The whole point of TODO #4: nothing about the internal GameState shape
@@ -194,7 +194,7 @@ describe('restoreLife', () => {
     expect(restored.error.kind).toBe('fingerprint_mismatch')
     expect(restored.error.message).toContain('friend-pack v2.1.0')
     expect(restored.error.required).toEqual(save.packs)
-    expect(restored.error.loaded).toEqual([{ id: 'core-tw', version: '1.0.0' }])
+    expect(restored.error.loaded).toEqual([{ id: coreTwManifest.id, version: coreTwManifest.version }])
   })
 
   it('reports content errors instead of replaying into a broken game', async () => {
@@ -219,8 +219,11 @@ describe('restoreLife', () => {
     const life = await halfALife('version-bump')
     const save = createSaveFile(life, 1)
 
+    // 只要跟目前的版本不同就好——寫死一個「未來版本」，core-tw 真的升版時
+    // 這條測試不會跟著紅（它測的是機制，不是某個版本號）
+    const NEXT_VERSION = '99.0.0'
     const bumped = new MemorySource('core-tw@next', {
-      manifest: { ...coreTwManifest, version: '1.1.0' },
+      manifest: { ...coreTwManifest, version: NEXT_VERSION },
       opportunities: coreTwOpportunities,
       events: coreTwEvents,
       careerGraph: coreTwCareerGraph,
@@ -231,8 +234,8 @@ describe('restoreLife', () => {
     expect(restored.ok).toBe(false)
     if (restored.ok) return
     expect(restored.error.kind).toBe('fingerprint_mismatch')
-    expect(restored.error.message).toContain('core-tw v1.0.0')
-    expect(restored.error.message).toContain('core-tw v1.1.0')
+    expect(restored.error.message).toContain(`core-tw v${coreTwManifest.version}`)
+    expect(restored.error.message).toContain(`core-tw v${NEXT_VERSION}`)
   })
 })
 

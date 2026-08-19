@@ -12,10 +12,13 @@ const choiceSchema = z.object({
   label: z.string().min(1),
   odds: z.string().regex(/^[+-]?\d+$/, 'odds must be a signed integer string, e.g. "+20", "0", "-15"'),
   mag: z.number(),
+  // 文案 per-choice：擲骰成功/失敗各一句，隨玩家實際選的動作走（§7.2）。
+  good: z.string().min(1),
+  bad: z.string().min(1),
 })
 
+// 效果共用：一個事件的 good/bad 各一組 effects，三個選項共享（由各自的 mag 縮放）。
 const outcomeSchema = z.object({
-  text: z.string().min(1),
   effects: z.array(stateEffectSchema),
 })
 

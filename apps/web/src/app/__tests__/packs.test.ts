@@ -51,12 +51,12 @@ const friendPack = (id = 'friend-pack', version = '1.0.0') =>
         weight: 999, // 蓋過官方事件，讓它在測試裡幾乎一定被抽到
         prompt: '朋友的內容包出了一件事。',
         choices: [
-          { id: 'safe', label: '朋友的選項 A', odds: '+10', mag: 1 },
-          { id: 'normal', label: '朋友的選項 B', odds: '0', mag: 2 },
-          { id: 'bold', label: '朋友的選項 C', odds: '-20', mag: 3 },
+          { id: 'safe', label: '朋友的選項 A', odds: '+10', mag: 1, good: '朋友的內容包生效了。', bad: '朋友的內容包也生效了。' },
+          { id: 'normal', label: '朋友的選項 B', odds: '0', mag: 2, good: '朋友的內容包生效了。', bad: '朋友的內容包也生效了。' },
+          { id: 'bold', label: '朋友的選項 C', odds: '-20', mag: 3, good: '朋友的內容包生效了。', bad: '朋友的內容包也生效了。' },
         ],
-        good: { text: '朋友的內容包生效了。', effects: [] },
-        bad: { text: '朋友的內容包也生效了。', effects: [] },
+        good: { effects: [] },
+        bad: { effects: [] },
         scene: {},
       },
     ],

@@ -13,19 +13,17 @@ export const eraEvents = [
     weight: 14,
     prompt: '早餐店的電視在報收盤，隔壁桌兩個人在比誰賺得多。',
     choices: [
-      { id: 'safe', label: '聽聽就算了', odds: '+30', mag: 1 },
-      { id: 'normal', label: '跟著開個戶', odds: '-5', mag: 2 },
-      { id: 'bold', label: '把定存解約全押', odds: '-35', mag: 4 },
+      { id: 'safe', label: '聽聽就算了', odds: '+30', mag: 1, good: '菜市場、計程車、公司茶水間，每個人都在講同一件事——而這次他們是對的。', bad: '當每個人都在講的時候，你進場的位置就是別人出場的位置。' },
+      { id: 'normal', label: '跟著開個戶', odds: '-5', mag: 2, good: '菜市場、計程車、公司茶水間，每個人都在講同一件事——而這次他們是對的。', bad: '當每個人都在講的時候，你進場的位置就是別人出場的位置。' },
+      { id: 'bold', label: '把定存解約全押', odds: '-35', mag: 4, good: '菜市場、計程車、公司茶水間，每個人都在講同一件事——而這次他們是對的。', bad: '當每個人都在講的時候，你進場的位置就是別人出場的位置。' },
     ],
     good: {
-      text: '菜市場、計程車、公司茶水間，每個人都在講同一件事——而這次他們是對的。',
       effects: [
         { type: 'capital.mul', value: 1.22 },
         { type: 'stat.add', key: 'rode_the_wave', value: 1 },
       ],
     },
     bad: {
-      text: '當每個人都在講的時候，你進場的位置就是別人出場的位置。',
       effects: [
         { type: 'capital.mul', value: 0.82 },
         { type: 'stat.add', key: 'market_lessons', value: 1 },
@@ -39,19 +37,17 @@ export const eraEvents = [
     weight: 11,
     prompt: '指數又創新高。帳戶上的數字大到你自己都覺得不真實。',
     choices: [
-      { id: 'safe', label: '獲利了結一半', odds: '+30', mag: 2 },
-      { id: 'normal', label: '設個停利點', odds: '+5', mag: 2 },
-      { id: 'bold', label: '這次不一樣', odds: '-35', mag: 4 },
+      { id: 'safe', label: '獲利了結一半', odds: '+30', mag: 2, good: '你在指數還在往上的時候按下賣出。之後有半年你都覺得自己賣早了。', bad: '「這次不一樣」是史上最貴的五個字。' },
+      { id: 'normal', label: '設個停利點', odds: '+5', mag: 2, good: '你在指數還在往上的時候按下賣出。之後有半年你都覺得自己賣早了。', bad: '「這次不一樣」是史上最貴的五個字。' },
+      { id: 'bold', label: '這次不一樣', odds: '-35', mag: 4, good: '你在指數還在往上的時候按下賣出。之後有半年你都覺得自己賣早了。', bad: '「這次不一樣」是史上最貴的五個字。' },
     ],
     good: {
-      text: '你在指數還在往上的時候按下賣出。之後有半年你都覺得自己賣早了。',
       effects: [
         { type: 'capital.mul', value: 1.1 },
         { type: 'stat.add', key: 'took_profit', value: 1 },
       ],
     },
     bad: {
-      text: '「這次不一樣」是史上最貴的五個字。',
       effects: [
         { type: 'capital.mul', value: 0.75 },
         { type: 'stat.add', key: 'market_lessons', value: 1 },
@@ -65,19 +61,17 @@ export const eraEvents = [
     weight: 16,
     prompt: '一開盤就是一片綠。新聞用的字是「崩」。',
     choices: [
-      { id: 'safe', label: '不看盤，照常上班', odds: '+25', mag: 2 },
-      { id: 'normal', label: '調整部位', odds: '0', mag: 2 },
-      { id: 'bold', label: '把所有現金投進去', odds: '-25', mag: 4 },
+      { id: 'safe', label: '不看盤，照常上班', odds: '+25', mag: 2, good: '崩盤那年你沒有做傻事。光是這樣，你就贏過一半的人。', bad: '你看著帳戶的數字，覺得那不是自己的錢，因為那已經不是任何人的錢了。' },
+      { id: 'normal', label: '調整部位', odds: '0', mag: 2, good: '崩盤那年你沒有做傻事。光是這樣，你就贏過一半的人。', bad: '你看著帳戶的數字，覺得那不是自己的錢，因為那已經不是任何人的錢了。' },
+      { id: 'bold', label: '把所有現金投進去', odds: '-25', mag: 4, good: '崩盤那年你沒有做傻事。光是這樣，你就贏過一半的人。', bad: '你看著帳戶的數字，覺得那不是自己的錢，因為那已經不是任何人的錢了。' },
     ],
     good: {
-      text: '崩盤那年你沒有做傻事。光是這樣，你就贏過一半的人。',
       effects: [
         { type: 'stat.add', key: 'nerve', value: 8 },
         { type: 'stat.add', key: 'survived_crash', value: 1 },
       ],
     },
     bad: {
-      text: '你看著帳戶的數字，覺得那不是自己的錢，因為那已經不是任何人的錢了。',
       effects: [
         { type: 'capital.mul', value: 0.85 },
         { type: 'stat.add', key: 'nerve', value: -12 },
@@ -92,19 +86,17 @@ export const eraEvents = [
     weight: 10,
     prompt: '鄰居換了車，說最近運氣好，順便告訴你他買了什麼。',
     choices: [
-      { id: 'safe', label: '祝福他', odds: '+30', mag: 1 },
-      { id: 'normal', label: '問問他買什麼', odds: '-5', mag: 2 },
-      { id: 'bold', label: '跟他買一樣的', odds: '-30', mag: 3 },
+      { id: 'safe', label: '祝福他', odds: '+30', mag: 1, good: '他那檔真的漲了，而你剛好也在。', bad: '半年後他換了工作，也換了說法。' },
+      { id: 'normal', label: '問問他買什麼', odds: '-5', mag: 2, good: '他那檔真的漲了，而你剛好也在。', bad: '半年後他換了工作，也換了說法。' },
+      { id: 'bold', label: '跟他買一樣的', odds: '-30', mag: 3, good: '他那檔真的漲了，而你剛好也在。', bad: '半年後他換了工作，也換了說法。' },
     ],
     good: {
-      text: '他那檔真的漲了，而你剛好也在。',
       effects: [
         { type: 'stat.add', key: 'capital', value: 25 },
         { type: 'stat.add', key: 'followed_tip', value: 1 },
       ],
     },
     bad: {
-      text: '半年後他換了工作，也換了說法。',
       effects: [
         { type: 'stat.add', key: 'capital', value: -20 },
         { type: 'stat.add', key: 'followed_tip', value: 1 },
@@ -118,19 +110,17 @@ export const eraEvents = [
     weight: 12,
     prompt: '已經沒有人在講股票了。財經版縮到三分之一頁。',
     choices: [
-      { id: 'safe', label: '先把工作顧好', odds: '+25', mag: 2 },
-      { id: 'normal', label: '固定小額買進', odds: '+10', mag: 2 },
-      { id: 'bold', label: '重押在沒人要的東西上', odds: '-25', mag: 4 },
+      { id: 'safe', label: '先把工作顧好', odds: '+25', mag: 2, good: '沒有人在談股票的那幾年，才是真正決定結果的那幾年。', bad: '你買的那些東西，後來真的就一直沒人要。' },
+      { id: 'normal', label: '固定小額買進', odds: '+10', mag: 2, good: '沒有人在談股票的那幾年，才是真正決定結果的那幾年。', bad: '你買的那些東西，後來真的就一直沒人要。' },
+      { id: 'bold', label: '重押在沒人要的東西上', odds: '-25', mag: 4, good: '沒有人在談股票的那幾年，才是真正決定結果的那幾年。', bad: '你買的那些東西，後來真的就一直沒人要。' },
     ],
     good: {
-      text: '沒有人在談股票的那幾年，才是真正決定結果的那幾年。',
       effects: [
         { type: 'capital.mul', value: 1.12 },
         { type: 'stat.add', key: 'bought_in_silence', value: 1 },
       ],
     },
     bad: {
-      text: '你買的那些東西，後來真的就一直沒人要。',
       effects: [{ type: 'capital.mul', value: 0.93 }],
     },
     scene: { bg: 'empty_office' },
@@ -141,16 +131,14 @@ export const eraEvents = [
     weight: 9,
     prompt: '匯率一週跳了三塊。銀行門口排起了隊。',
     choices: [
-      { id: 'safe', label: '什麼都不換', odds: '+25', mag: 2 },
-      { id: 'normal', label: '換一點外幣', odds: '0', mag: 2 },
-      { id: 'bold', label: '整筆換成外幣', odds: '-30', mag: 3 },
+      { id: 'safe', label: '什麼都不換', odds: '+25', mag: 2, good: '匯率往你想的方向走了。這種事一輩子不會發生太多次。', bad: '你在最貴的時候換，在最便宜的時候換回來。' },
+      { id: 'normal', label: '換一點外幣', odds: '0', mag: 2, good: '匯率往你想的方向走了。這種事一輩子不會發生太多次。', bad: '你在最貴的時候換，在最便宜的時候換回來。' },
+      { id: 'bold', label: '整筆換成外幣', odds: '-30', mag: 3, good: '匯率往你想的方向走了。這種事一輩子不會發生太多次。', bad: '你在最貴的時候換，在最便宜的時候換回來。' },
     ],
     good: {
-      text: '匯率往你想的方向走了。這種事一輩子不會發生太多次。',
       effects: [{ type: 'capital.mul', value: 1.08 }],
     },
     bad: {
-      text: '你在最貴的時候換，在最便宜的時候換回來。',
       effects: [{ type: 'capital.mul', value: 0.94 }],
     },
     scene: { bg: 'bank' },
@@ -161,12 +149,11 @@ export const eraEvents = [
     weight: 9,
     prompt: '同一個社區，去年開的價和今年開的價差了兩成。',
     choices: [
-      { id: 'safe', label: '自住就好', odds: '+25', mag: 2 },
-      { id: 'normal', label: '買一間收租', odds: '0', mag: 3 },
-      { id: 'bold', label: '貸款買第三間', odds: '-30', mag: 4 },
+      { id: 'safe', label: '自住就好', odds: '+25', mag: 2, good: '那幾年，房子比你的工作還會賺錢。', bad: '空租、修繕、房貸。它變成一個每個月都要餵的東西。' },
+      { id: 'normal', label: '買一間收租', odds: '0', mag: 3, good: '那幾年，房子比你的工作還會賺錢。', bad: '空租、修繕、房貸。它變成一個每個月都要餵的東西。' },
+      { id: 'bold', label: '貸款買第三間', odds: '-30', mag: 4, good: '那幾年，房子比你的工作還會賺錢。', bad: '空租、修繕、房貸。它變成一個每個月都要餵的東西。' },
     ],
     good: {
-      text: '那幾年，房子比你的工作還會賺錢。',
       effects: [
         { type: 'capital.mul', value: 1.18 },
         { type: 'stat.add', key: 'property_bet', value: 1 },
@@ -174,7 +161,6 @@ export const eraEvents = [
       ],
     },
     bad: {
-      text: '空租、修繕、房貸。它變成一個每個月都要餵的東西。',
       effects: [
         { type: 'stat.add', key: 'debt', value: 40 },
         { type: 'stat.add', key: 'property_bet', value: 1 },
@@ -189,12 +175,11 @@ export const eraEvents = [
     weight: 11,
     prompt: '每一場說明會都在講同一個名詞，而你還說不清楚它是什麼。',
     choices: [
-      { id: 'safe', label: '等它成熟再說', odds: '+30', mag: 1 },
-      { id: 'normal', label: '花時間搞懂它', odds: '0', mag: 2 },
-      { id: 'bold', label: '現在就進場', odds: '-25', mag: 4 },
+      { id: 'safe', label: '等它成熟再說', odds: '+30', mag: 1, good: '你比大多數人早半年看懂那個名詞的意思。', bad: '那個名詞後來沒有人再提起了。' },
+      { id: 'normal', label: '花時間搞懂它', odds: '0', mag: 2, good: '你比大多數人早半年看懂那個名詞的意思。', bad: '那個名詞後來沒有人再提起了。' },
+      { id: 'bold', label: '現在就進場', odds: '-25', mag: 4, good: '你比大多數人早半年看懂那個名詞的意思。', bad: '那個名詞後來沒有人再提起了。' },
     ],
     good: {
-      text: '你比大多數人早半年看懂那個名詞的意思。',
       effects: [
         { type: 'stat.add', key: 'cognition', value: 3 },
         { type: 'capital.mul', value: 1.12 },
@@ -202,7 +187,6 @@ export const eraEvents = [
       ],
     },
     bad: {
-      text: '那個名詞後來沒有人再提起了。',
       effects: [{ type: 'capital.mul', value: 0.9 }],
     },
     scene: { bg: 'conference', fx: 'ticker' },
@@ -213,19 +197,17 @@ export const eraEvents = [
     weight: 10,
     prompt: '客戶把明年的量先押下來了，問你們接不接得完。',
     choices: [
-      { id: 'safe', label: '照常出貨', odds: '+25', mag: 2 },
-      { id: 'normal', label: '加開一條線', odds: '0', mag: 2 },
-      { id: 'bold', label: '押上全部產能', odds: '-25', mag: 3 },
+      { id: 'safe', label: '照常出貨', odds: '+25', mag: 2, good: '訂單多到你們開始挑客人。那種日子過得很快。', bad: '客戶砍單的通知，比訂單來的時候還快。' },
+      { id: 'normal', label: '加開一條線', odds: '0', mag: 2, good: '訂單多到你們開始挑客人。那種日子過得很快。', bad: '客戶砍單的通知，比訂單來的時候還快。' },
+      { id: 'bold', label: '押上全部產能', odds: '-25', mag: 3, good: '訂單多到你們開始挑客人。那種日子過得很快。', bad: '客戶砍單的通知，比訂單來的時候還快。' },
     ],
     good: {
-      text: '訂單多到你們開始挑客人。那種日子過得很快。',
       effects: [
         { type: 'stat.add', key: 'income', value: 10 },
         { type: 'stat.add', key: 'capital', value: 15 },
       ],
     },
     bad: {
-      text: '客戶砍單的通知，比訂單來的時候還快。',
       effects: [
         { type: 'stat.add', key: 'income', value: -6 },
         { type: 'stat.add', key: 'nerve', value: -6 },
@@ -239,19 +221,17 @@ export const eraEvents = [
     weight: 13,
     prompt: '公告貼在茶水間：今年調薪凍結，年終看下半年。',
     choices: [
-      { id: 'safe', label: '忍過去', odds: '+25', mag: 2 },
-      { id: 'normal', label: '談談看', odds: '0', mag: 2 },
-      { id: 'bold', label: '這種時候還敢跳槽', odds: '-30', mag: 3 },
+      { id: 'safe', label: '忍過去', odds: '+25', mag: 2, good: '你在別人不敢動的時候動了，而且動對了。', bad: '凍薪、無薪假、然後是一封公告。' },
+      { id: 'normal', label: '談談看', odds: '0', mag: 2, good: '你在別人不敢動的時候動了，而且動對了。', bad: '凍薪、無薪假、然後是一封公告。' },
+      { id: 'bold', label: '這種時候還敢跳槽', odds: '-30', mag: 3, good: '你在別人不敢動的時候動了，而且動對了。', bad: '凍薪、無薪假、然後是一封公告。' },
     ],
     good: {
-      text: '你在別人不敢動的時候動了，而且動對了。',
       effects: [
         { type: 'stat.add', key: 'income', value: 8 },
         { type: 'stat.add', key: 'moved_in_winter', value: 1 },
       ],
     },
     bad: {
-      text: '凍薪、無薪假、然後是一封公告。',
       effects: [
         { type: 'stat.add', key: 'income', value: -7 },
         { type: 'stat.add', key: 'nerve', value: -6 },
@@ -265,19 +245,17 @@ export const eraEvents = [
     weight: 11,
     prompt: '獵人頭又開始打電話了，開的價比去年高。',
     choices: [
-      { id: 'safe', label: '留在原地', odds: '+20', mag: 1 },
-      { id: 'normal', label: '看看外面', odds: '+5', mag: 2 },
-      { id: 'bold', label: '要求加薪三成', odds: '-25', mag: 3 },
+      { id: 'safe', label: '留在原地', odds: '+20', mag: 1, good: '景氣回來的第一年，是唯一一段你說話比較大聲的時間。', bad: '你開的價，剛好讓對方想起還有別人可以選。' },
+      { id: 'normal', label: '看看外面', odds: '+5', mag: 2, good: '景氣回來的第一年，是唯一一段你說話比較大聲的時間。', bad: '你開的價，剛好讓對方想起還有別人可以選。' },
+      { id: 'bold', label: '要求加薪三成', odds: '-25', mag: 3, good: '景氣回來的第一年，是唯一一段你說話比較大聲的時間。', bad: '你開的價，剛好讓對方想起還有別人可以選。' },
     ],
     good: {
-      text: '景氣回來的第一年，是唯一一段你說話比較大聲的時間。',
       effects: [
         { type: 'stat.add', key: 'income', value: 7 },
         { type: 'stat.add', key: 'network', value: 2 },
       ],
     },
     bad: {
-      text: '你開的價，剛好讓對方想起還有別人可以選。',
       effects: [{ type: 'stat.add', key: 'nerve', value: -5 }],
     },
     scene: { bg: 'office' },
@@ -288,19 +266,17 @@ export const eraEvents = [
     weight: 9,
     prompt: '承銷公告出來了，抽籤要在三天內圈存。',
     choices: [
-      { id: 'safe', label: '不抽', odds: '+25', mag: 1 },
-      { id: 'normal', label: '抽一張看看', odds: '0', mag: 2 },
-      { id: 'bold', label: '全家的帳戶一起抽', odds: '-20', mag: 3 },
+      { id: 'safe', label: '不抽', odds: '+25', mag: 1, good: '中籤那天，你算了一下報酬率，笑了出來。', bad: '掛牌第一天就跌破承銷價。' },
+      { id: 'normal', label: '抽一張看看', odds: '0', mag: 2, good: '中籤那天，你算了一下報酬率，笑了出來。', bad: '掛牌第一天就跌破承銷價。' },
+      { id: 'bold', label: '全家的帳戶一起抽', odds: '-20', mag: 3, good: '中籤那天，你算了一下報酬率，笑了出來。', bad: '掛牌第一天就跌破承銷價。' },
     ],
     good: {
-      text: '中籤那天，你算了一下報酬率，笑了出來。',
       effects: [
         { type: 'stat.add', key: 'capital', value: 20 },
         { type: 'stat.add', key: 'gambles', value: 1 },
       ],
     },
     bad: {
-      text: '掛牌第一天就跌破承銷價。',
       effects: [
         { type: 'stat.add', key: 'capital', value: -8 },
         { type: 'stat.add', key: 'gambles', value: 1 },
@@ -314,19 +290,17 @@ export const eraEvents = [
     weight: 8,
     prompt: '你做了二十年的東西，現在被歸在「傳統產業」那一欄。',
     choices: [
-      { id: 'safe', label: '守住現在會的', odds: '+20', mag: 1 },
-      { id: 'normal', label: '學一點新東西', odds: '+5', mag: 2 },
-      { id: 'bold', label: '整個轉到新領域', odds: '-30', mag: 3 },
+      { id: 'safe', label: '守住現在會的', odds: '+20', mag: 1, good: '這個島每十年換一次主力產業。這次你跟上了。', bad: '你會的東西還在，只是沒有人需要了。' },
+      { id: 'normal', label: '學一點新東西', odds: '+5', mag: 2, good: '這個島每十年換一次主力產業。這次你跟上了。', bad: '你會的東西還在，只是沒有人需要了。' },
+      { id: 'bold', label: '整個轉到新領域', odds: '-30', mag: 3, good: '這個島每十年換一次主力產業。這次你跟上了。', bad: '你會的東西還在，只是沒有人需要了。' },
     ],
     good: {
-      text: '這個島每十年換一次主力產業。這次你跟上了。',
       effects: [
         { type: 'stat.add', key: 'cognition', value: 4 },
         { type: 'stat.add', key: 'income', value: 5 },
       ],
     },
     bad: {
-      text: '你會的東西還在，只是沒有人需要了。',
       effects: [
         { type: 'stat.add', key: 'income', value: -8 },
         { type: 'stat.add', key: 'nerve', value: -5 },
@@ -340,19 +314,17 @@ export const eraEvents = [
     weight: 8,
     prompt: '同一件事你聽到三個版本，每個講的人都拍胸脯。',
     choices: [
-      { id: 'safe', label: '只看公開資訊', odds: '+25', mag: 2 },
-      { id: 'normal', label: '打幾通電話問問', odds: '0', mag: 2 },
-      { id: 'bold', label: '相信最快的那個消息', odds: '-35', mag: 3 },
+      { id: 'safe', label: '只看公開資訊', odds: '+25', mag: 2, good: '崩盤的時候，最有價值的不是消息，是能分辨消息的人。', bad: '你聽到的每一個版本都不一樣，而你選了最刺激的那個。' },
+      { id: 'normal', label: '打幾通電話問問', odds: '0', mag: 2, good: '崩盤的時候，最有價值的不是消息，是能分辨消息的人。', bad: '你聽到的每一個版本都不一樣，而你選了最刺激的那個。' },
+      { id: 'bold', label: '相信最快的那個消息', odds: '-35', mag: 3, good: '崩盤的時候，最有價值的不是消息，是能分辨消息的人。', bad: '你聽到的每一個版本都不一樣，而你選了最刺激的那個。' },
     ],
     good: {
-      text: '崩盤的時候，最有價值的不是消息，是能分辨消息的人。',
       effects: [
         { type: 'stat.add', key: 'cognition', value: 3 },
         { type: 'stat.add', key: 'network', value: 2 },
       ],
     },
     bad: {
-      text: '你聽到的每一個版本都不一樣，而你選了最刺激的那個。',
       effects: [
         { type: 'capital.mul', value: 0.9 },
         { type: 'stat.add', key: 'market_lessons', value: 1 },
@@ -366,19 +338,17 @@ export const eraEvents = [
     weight: 10,
     prompt: '這一波你看得很清楚。你也清楚自己還剩幾年可以再來一次。',
     choices: [
-      { id: 'safe', label: '這把不玩了', odds: '+30', mag: 2 },
-      { id: 'normal', label: '小部位參與', odds: '+5', mag: 2 },
-      { id: 'bold', label: '最後一次全押', odds: '-35', mag: 4 },
+      { id: 'safe', label: '這把不玩了', odds: '+30', mag: 2, good: '你知道這可能是你人生中最後一次多頭，而你剛好準備好了。', bad: '這個年紀輸掉的錢，是沒有時間再賺回來的。' },
+      { id: 'normal', label: '小部位參與', odds: '+5', mag: 2, good: '你知道這可能是你人生中最後一次多頭，而你剛好準備好了。', bad: '這個年紀輸掉的錢，是沒有時間再賺回來的。' },
+      { id: 'bold', label: '最後一次全押', odds: '-35', mag: 4, good: '你知道這可能是你人生中最後一次多頭，而你剛好準備好了。', bad: '這個年紀輸掉的錢，是沒有時間再賺回來的。' },
     ],
     good: {
-      text: '你知道這可能是你人生中最後一次多頭，而你剛好準備好了。',
       effects: [
         { type: 'capital.mul', value: 1.2 },
         { type: 'stat.add', key: 'last_dance', value: 1 },
       ],
     },
     bad: {
-      text: '這個年紀輸掉的錢，是沒有時間再賺回來的。',
       effects: [
         { type: 'capital.mul', value: 0.78 },
         { type: 'stat.add', key: 'nerve', value: -12 },
@@ -392,19 +362,17 @@ export const eraEvents = [
     weight: 8,
     prompt: '孩子問你「我們家算有錢嗎」，接著問「那要怎麼變有錢」。',
     choices: [
-      { id: 'safe', label: '叫他好好念書', odds: '+20', mag: 1 },
-      { id: 'normal', label: '講講自己的經驗', odds: '+5', mag: 2 },
-      { id: 'bold', label: '把帳戶打開給他看', odds: '-20', mag: 3 },
+      { id: 'safe', label: '叫他好好念書', odds: '+20', mag: 1, good: '你講的不是明牌，是那幾次你怎麼撐過來的。他聽進去了。', bad: '他點點頭，然後去問了 App 上的某個人。' },
+      { id: 'normal', label: '講講自己的經驗', odds: '+5', mag: 2, good: '你講的不是明牌，是那幾次你怎麼撐過來的。他聽進去了。', bad: '他點點頭，然後去問了 App 上的某個人。' },
+      { id: 'bold', label: '把帳戶打開給他看', odds: '-20', mag: 3, good: '你講的不是明牌，是那幾次你怎麼撐過來的。他聽進去了。', bad: '他點點頭，然後去問了 App 上的某個人。' },
     ],
     good: {
-      text: '你講的不是明牌，是那幾次你怎麼撐過來的。他聽進去了。',
       effects: [
         { type: 'stat.add', key: 'nerve', value: 8 },
         { type: 'stat.add', key: 'passed_it_on', value: 1 },
       ],
     },
     bad: {
-      text: '他點點頭，然後去問了 App 上的某個人。',
       effects: [{ type: 'stat.add', key: 'nerve', value: -4 }],
     },
     scene: { bg: 'home', actor: 'child' },

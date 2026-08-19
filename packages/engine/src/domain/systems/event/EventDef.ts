@@ -7,18 +7,32 @@ import type { SceneRef, StateEffect } from '../../expr/effects.js'
 
 export type EventChoiceId = 'safe' | 'normal' | 'bold'
 
+/**
+ * The success / failure branch of an event. Only the **effects** live here:
+ * they are shared by all three choices (each choice's `mag` scales them, §7.2).
+ * The *wording* lives on the choice instead — see {@link EventChoice.good} —
+ * so "推掉" (declining) and "揪一整桌" (going all in) never share one line that
+ * only fits one of them.
+ */
+export interface EventOutcome {
+  effects: StateEffect[]
+}
+
 export interface EventChoice {
   id: EventChoiceId
   label: string
   /** Signed integer string offset from the base success rate, e.g. "+20". */
   odds: string
-  /** Outcome magnitude: bold risks more and pays more. */
+  /** Outcome magnitude: bold risks more and pays more (scales shared effects). */
   mag: number
-}
-
-export interface EventOutcome {
-  text: string
-  effects: StateEffect[]
+  /**
+   * What this choice reads when the roll succeeds / fails (§7.2).
+   *
+   * The effects are shared (see {@link EventDef.good}); only the sentence is
+   * per-choice, so the story always matches the action the player took.
+   */
+  good: string
+  bad: string
 }
 
 export interface EventDef {
@@ -39,6 +53,7 @@ export interface EventDef {
    */
   prompt?: string
   choices: EventChoice[]
+  /** Shared effects applied when the roll succeeds / fails (scaled by `mag`). */
   good: EventOutcome
   bad: EventOutcome
   scene: SceneRef

@@ -116,11 +116,14 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
     // The displayed number is what gets rolled — never a recomputed variant.
     const chance = view?.chance ?? successChance(choice)
     const good = ctx.rng.chance(chance / 100)
+    // Effects are shared by the three choices (scaled by mag); the sentence is
+    // the one written for *this* choice, so it matches the action taken (§7.2).
     const outcome = good ? event.good : event.bad
+    const text = good ? choice.good : choice.bad
 
     // The stage was already dressed when the event was presented, and the
     // director keeps it between plans — so this half only speaks the outcome.
-    ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? NARRATOR_ACTOR, text: outcome.text })
+    ctx.emit({ type: 'scene.say', actor: event.scene.actor ?? NARRATOR_ACTOR, text })
     if (event.scene.sfx) ctx.emit({ type: 'scene.sfx', id: event.scene.sfx })
     if (event.scene.fx) ctx.emit({ type: 'scene.fx', id: event.scene.fx })
 

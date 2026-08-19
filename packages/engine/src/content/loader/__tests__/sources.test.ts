@@ -25,12 +25,12 @@ const anEvent = (id: string) => ({
   weight: 1,
   prompt: '有件事發生了。',
   choices: [
-    { id: 'safe', label: '算了', odds: '+10', mag: 1 },
-    { id: 'normal', label: '看看', odds: '0', mag: 2 },
-    { id: 'bold', label: '梭了', odds: '-20', mag: 3 },
+    { id: 'safe', label: '算了', odds: '+10', mag: 1, good: '還不錯。', bad: '不太妙。' },
+    { id: 'normal', label: '看看', odds: '0', mag: 2, good: '還不錯。', bad: '不太妙。' },
+    { id: 'bold', label: '梭了', odds: '-20', mag: 3, good: '還不錯。', bad: '不太妙。' },
   ],
-  good: { text: '還不錯。', effects: [] },
-  bad: { text: '不太妙。', effects: [] },
+  good: { effects: [] },
+  bad: { effects: [] },
   scene: {},
 })
 

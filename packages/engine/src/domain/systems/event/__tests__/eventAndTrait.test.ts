@@ -18,12 +18,12 @@ const COIN_FLIP: EventDef = {
   weight: 10,
   prompt: '晚上九點，主管還在。',
   choices: [
-    { id: 'safe', label: '準時下班', odds: '+20', mag: 1 },
-    { id: 'normal', label: '配合加班', odds: '0', mag: 2 },
-    { id: 'bold', label: '拼命表現', odds: '-15', mag: 3 },
+    { id: 'safe', label: '準時下班', odds: '+20', mag: 1, good: '主管注意到你了。', bad: '你累壞了。' },
+    { id: 'normal', label: '配合加班', odds: '0', mag: 2, good: '主管注意到你了。', bad: '你累壞了。' },
+    { id: 'bold', label: '拼命表現', odds: '-15', mag: 3, good: '主管注意到你了。', bad: '你累壞了。' },
   ],
-  good: { text: '主管注意到你了。', effects: [{ type: 'stat.add', key: 'income', value: 2 }] },
-  bad: { text: '你累壞了。', effects: [{ type: 'stat.add', key: 'burnout', value: 1 }] },
+  good: { effects: [{ type: 'stat.add', key: 'income', value: 2 }] },
+  bad: { effects: [{ type: 'stat.add', key: 'burnout', value: 1 }] },
   scene: { bg: 'office', sfx: 'keyboard' },
 }
 
@@ -37,8 +37,9 @@ const TRIGGER_ONLY: EventDef = {
   ...COIN_FLIP,
   id: 'drawdown_50',
   weight: 0,
-  good: { text: '你撐住了。', effects: [{ type: 'stat.add', key: 'held_through_drawdown', value: 1 }] },
-  bad: { text: '你賣了。', effects: [{ type: 'stat.add', key: 'panic_sold', value: 1 }] },
+  choices: COIN_FLIP.choices.map((c) => ({ ...c, good: '你撐住了。', bad: '你賣了。' })),
+  good: { effects: [{ type: 'stat.add', key: 'held_through_drawdown', value: 1 }] },
+  bad: { effects: [{ type: 'stat.add', key: 'panic_sold', value: 1 }] },
 }
 
 const DIAMOND_HANDS: TraitDef = {
@@ -222,8 +223,9 @@ describe('three-tier risk (§7.2)', () => {
     expect(effects).toContainEqual({ type: 'scene.bg', id: 'office' })
     expect(effects).toContainEqual({ type: 'scene.say', actor: 'narrator', text: COIN_FLIP.prompt })
     // …and the outcome text is *not* spoiled before the choice is made
-    expect(effects.some((e) => e.type === 'scene.say' && e.text === COIN_FLIP.good.text)).toBe(false)
-    expect(effects.some((e) => e.type === 'scene.say' && e.text === COIN_FLIP.bad.text)).toBe(false)
+    const anyText = COIN_FLIP.choices[0]
+    expect(effects.some((e) => e.type === 'scene.say' && e.text === anyText?.good)).toBe(false)
+    expect(effects.some((e) => e.type === 'scene.say' && e.text === anyText?.bad)).toBe(false)
   })
 
   it('an event with no prompt still works — the panel falls back to a generic header', () => {
@@ -244,9 +246,9 @@ describe('three-tier risk (§7.2)', () => {
     // 結算只說結果——舞台在「提出」那一刻就已經佈好了，director 會把它留著
     const said = effects.filter((e) => e.type === 'scene.say')
     expect(said).toHaveLength(1)
-    expect([COIN_FLIP.good.text, COIN_FLIP.bad.text]).toContain(
-      said[0] && 'text' in said[0] ? said[0].text : '',
-    )
+    // resolveEvent above chose 'safe' — the text is that choice's good/bad line.
+    const safe = COIN_FLIP.choices.find((c) => c.id === 'safe')
+    expect([safe?.good, safe?.bad]).toContain(said[0] && 'text' in said[0] ? said[0].text : '')
     expect(effects.some((e) => e.type === 'scene.bg')).toBe(false)
     // SceneHint 對 state 零影響（§6.3）
     expect(nextState.events.pending).toEqual([])

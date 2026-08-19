@@ -122,9 +122,11 @@ describe('內容的內部一致性', () => {
       // 一到兩句：太短說不出畫面，太長玩家不會讀
       expect(event.prompt.length, event.id).toBeGreaterThan(8)
       expect(event.prompt.length, event.id).toBeLessThan(60)
-      // 情境不能是結局的複製貼上——那等於先爆雷
-      expect(event.prompt, event.id).not.toBe(event.good.text)
-      expect(event.prompt, event.id).not.toBe(event.bad.text)
+      // 情境不能是結局的複製貼上——那等於先爆雷（結局文案現在在每個選項上）
+      for (const choice of event.choices) {
+        expect(event.prompt, `${event.id}/${choice.id}`).not.toBe(choice.good)
+        expect(event.prompt, `${event.id}/${choice.id}`).not.toBe(choice.bad)
+      }
     }
   })
 
@@ -147,7 +149,8 @@ describe('§2 暗示但不指名', () => {
 
   const strings: string[] = []
   for (const event of coreTwEvents) {
-    strings.push(...event.choices.map((c) => c.label), event.good.text, event.bad.text, event.prompt)
+    strings.push(event.prompt)
+    for (const choice of event.choices) strings.push(choice.label, choice.good, choice.bad)
   }
   for (const opportunity of coreTwOpportunities) {
     for (const level of [opportunity.signal.low, opportunity.signal.mid, opportunity.signal.high]) {

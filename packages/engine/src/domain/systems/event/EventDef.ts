@@ -8,6 +8,31 @@ import type { SceneRef, StateEffect } from '../../expr/effects.js'
 export type EventChoiceId = 'safe' | 'normal' | 'bold'
 
 /**
+ * One edge of the story graph (§7.2): "after this outcome, play that event".
+ *
+ * Declared as a field rather than buried in `effects` because it *is* an edge
+ * — an editor has to draw it, and the loader has to be able to prove it points
+ * somewhere real. A dangling id is caught at load time, not silently dropped
+ * at runtime.
+ */
+export interface EventLink {
+  id: string
+  /**
+   * 0 / omitted — play it later the same year, straight after this one, and
+   * **skip the target's `require`**: the scene the author just wrote is still
+   * on screen, nothing has had a chance to change.
+   *
+   * >= 1 — schedule it that many years out, and **do check `require` when it
+   * comes due**. Three years is long enough for the player to have divorced,
+   * gone broke or changed careers; playing "your second date with her"
+   * regardless would be worse than playing nothing.
+   */
+  afterYears?: number
+  /** Played instead when a due link cannot fire (require failed, or `once` already spent). */
+  orElse?: string
+}
+
+/**
  * The success / failure branch of an event. Only the **effects** live here:
  * they are shared by all three choices (each choice's `mag` scales them, §7.2).
  * The *wording* lives on the choice instead — see {@link EventChoice.good} —
@@ -16,6 +41,13 @@ export type EventChoiceId = 'safe' | 'normal' | 'bold'
  */
 export interface EventOutcome {
   effects: StateEffect[]
+  /**
+   * Where the story goes from here (§7.2). Lives on the *outcome*, not on the
+   * event, so success and failure can lead somewhere different — that split is
+   * the only branching an event has, since the three choices share one pair of
+   * outcomes.
+   */
+  next?: EventLink
 }
 
 export interface EventChoice {
@@ -38,8 +70,16 @@ export interface EventChoice {
 export interface EventDef {
   id: string
   require: Expr
-  /** 0 means "never drawn at random" — only reachable via `event.trigger`. */
+  /** 0 means "never drawn at random" — only reachable as some outcome's `next`. */
   weight: number
+  /**
+   * Play at most once per life, however it turned out (§7.2).
+   *
+   * Distinct from the "retry until it lands" shape, which stays a `require` +
+   * `flag.set` on the good branch only — `meet_someone` comes back every year
+   * until you actually partner up, and should.
+   */
+  once?: boolean
   /**
    * The situation, shown **before** the player chooses (§7.2).
    *

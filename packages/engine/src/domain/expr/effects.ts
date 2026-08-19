@@ -16,7 +16,6 @@ export type StateEffect =
   | { type: 'flag.set'; key: string }
   | { type: 'trait.grant'; id: string }
   | { type: 'position.open'; opportunityId: string; sizing: Sizing }
-  | { type: 'event.trigger'; eventId: string }
 
 export type SceneHint =
   | { type: 'scene.bg'; id: string }
@@ -25,6 +24,14 @@ export type SceneHint =
   | { type: 'scene.sfx'; id: string; priority?: 'high' | 'normal'; dedupeMs?: number }
   | { type: 'scene.bgm'; id: string; fadeMs?: number }
   | { type: 'scene.fx'; id: string }
+  /**
+   * §7.2: a note that an event was queued. Emitted *after* the queue has
+   * already been written, so it carries no state change of its own — which is
+   * why it sits here and not in StateEffect. Content cannot author it:
+   * sequencing is declared with an outcome's `next`, and the only writers are
+   * EventSystem and PositionSystem.
+   */
+  | { type: 'event.trigger'; eventId: string }
 
 export type Effect = StateEffect | SceneHint
 
@@ -46,7 +53,6 @@ const STATE_EFFECT_TYPES = new Set<StateEffect['type']>([
   'flag.set',
   'trait.grant',
   'position.open',
-  'event.trigger',
 ])
 
 export function isStateEffect(effect: Effect): effect is StateEffect {
@@ -61,12 +67,10 @@ export function isSceneHint(effect: Effect): effect is SceneHint {
  * Applies one StateEffect to state, purely: returns a new GameState and
  * never mutates the one passed in.
  *
- * `position.open` and `event.trigger` are inert here on purpose. Opening a
- * position needs the calendar, the era and an rng stream to resolve `truth`
- * against (§7.1), so PositionSystem is its single owner — a second writer
- * that only bumped `positions.count` would leave the count disagreeing with
- * the list. Likewise a triggered event is resolved by EventSystem, which
- * routes content-authored effects of both kinds back to the owning system.
+ * `position.open` is inert here on purpose. Opening a position needs the
+ * calendar, the era and an rng stream to resolve `truth` against (§7.1), so
+ * PositionSystem is its single owner — a second writer that only bumped
+ * `positions.count` would leave the count disagreeing with the list.
  */
 export function applyStateEffect(state: GameState, effect: StateEffect, _rng: RngStream): GameState {
   const next = cloneGameState(state)
@@ -88,8 +92,6 @@ export function applyStateEffect(state: GameState, effect: StateEffect, _rng: Rn
       }
       return next
     case 'position.open':
-      return next
-    case 'event.trigger':
       return next
   }
 }

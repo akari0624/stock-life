@@ -23,6 +23,7 @@ export {
   cloneGameState,
   type GameState,
   type EventsState,
+  type QueuedEvent,
   type PlayerState,
   type CapitalState,
   type CareerState,
@@ -302,12 +303,14 @@ export {
   type EventDef,
   type EventChoice,
   type EventChoiceId,
+  type EventLink,
   type EventOutcome,
 } from './domain/systems/event/EventDef.js'
 export type { PendingEvent, PendingChoiceView } from './domain/systems/event/PendingEvent.js'
 export {
   createEventSystem,
   enqueueEvent,
+  type EnqueueOptions,
   EVENT_SYSTEM_ID,
   EVENT_SYSTEM_ORDER,
   DEFAULT_CHOICE,

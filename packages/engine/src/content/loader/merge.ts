@@ -40,6 +40,36 @@ export function validateMergedContent(content: MergedContent): ContentValidation
     issues.push({ section: 'careerGraph', path: ['nodes'], message: '這組內容包沒有任何職涯節點，開不了局' })
   }
 
+  // §7.2: a `next` is an edge of the story graph, so a dangling one is the
+  // same class of error as a career edge into a missing node — and it has to
+  // be caught here, against the packs actually loaded, because a pack may
+  // legitimately continue a story another pack authored.
+  const eventIds = new Set(content.events.map((event) => event.id))
+  const checkLink = (
+    section: ContentValidationIssue['section'],
+    path: (string | number)[],
+    id: string | undefined,
+    what: string,
+  ): void => {
+    if (id === undefined || eventIds.has(id)) return
+    issues.push({ section, path, message: `${what}指向不存在的事件「${id}」（是不是少載入了它所屬的內容包？）` })
+  }
+
+  content.events.forEach((event, index) => {
+    for (const branch of ['good', 'bad'] as const) {
+      const link = event[branch].next
+      if (!link) continue
+      checkLink('events', ['events', index, branch, 'next', 'id'], link.id, `事件「${event.id}」的 ${branch}.next`)
+      checkLink('events', ['events', index, branch, 'next', 'orElse'], link.orElse, `事件「${event.id}」的 ${branch}.next.orElse`)
+    }
+  })
+
+  content.traits.forEach((trait, index) => {
+    if (!trait.next) return
+    checkLink('traits', ['traits', index, 'next', 'id'], trait.next.id, `特性「${trait.id}」的 next`)
+    checkLink('traits', ['traits', index, 'next', 'orElse'], trait.next.orElse, `特性「${trait.id}」的 next.orElse`)
+  })
+
   const ids = new Set(content.careerGraph.nodes.map((node) => node.id))
   content.careerGraph.edges.forEach((edge, index) => {
     for (const end of ['from', 'to'] as const) {

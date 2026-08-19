@@ -5,7 +5,12 @@ import { createInitialGameState } from '../../../state/createGameState.js'
 import { Calendar } from '../../../Calendar.js'
 import { SeededRng } from '../../../rng/SeededRng.js'
 import type { GameState } from '../../../state/GameState.js'
-import { createEventSystem, COUNTER_EVENTS_RESOLVED, counterForEventChoice } from '../EventSystem.js'
+import {
+  createEventSystem,
+  enqueueEvent,
+  COUNTER_EVENTS_RESOLVED,
+  counterForEventChoice,
+} from '../EventSystem.js'
 import { successChance, BASE_SUCCESS_CHANCE, type EventDef } from '../EventDef.js'
 import { createTraitSystem, COUNTER_TRAITS_UNLOCKED } from '../../trait/TraitSystem.js'
 import type { TraitDef } from '../../trait/TraitDef.js'
@@ -152,7 +157,7 @@ describe('three-tier risk (§7.2)', () => {
       expect(current.events.pending).toEqual([])
     }
 
-    current.events.queue.push(TRIGGER_ONLY.id)
+    enqueueEvent(current, TRIGGER_ONLY.id)
     current = advance(current, { type: 'advanceTurn' }, rng).nextState
     expect(current.events.pending[0]?.eventId).toBe(TRIGGER_ONLY.id)
   })
@@ -193,11 +198,11 @@ describe('three-tier risk (§7.2)', () => {
     expect(current.events.pending).toHaveLength(1)
   })
 
-  it('但被 event.trigger 叫到的事件不受這條規則限制（考驗本來就會再來）', () => {
+  it('但被排進佇列的事件不受這條規則限制（考驗本來就會再來）', () => {
     const ctx = setup({ seed: 'trigger-repeat', events: [TRIGGER_ONLY] })
     let current = ctx.state
     for (let i = 0; i < 2; i++) {
-      current.events.queue.push(TRIGGER_ONLY.id)
+      enqueueEvent(current, TRIGGER_ONLY.id)
       current = ctx.advance(current, { type: 'advanceTurn' }, ctx.rng).nextState
       expect(current.events.pending[0]?.eventId).toBe(TRIGGER_ONLY.id)
       current = ctx.advance(current, { type: 'resolveEvent', choice: 'normal' }, ctx.rng).nextState

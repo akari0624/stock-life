@@ -1,12 +1,12 @@
 import type { GameSystem, Phase, SystemCtx } from '../GameSystem.js'
-import type { GameState } from '../../state/GameState.js'
+import type { GameState, QueuedEvent } from '../../state/GameState.js'
 import type { Command } from '../../turn/Command.js'
 import type { FacadeField } from '../../facade/FacadeField.js'
 import type { RngStream } from '../../rng/SeededRng.js'
 import { addStat } from '../../state/stats.js'
 import { isSatisfied } from '../../expr/evaluate.js'
 import { NARRATOR_ACTOR } from '../../expr/sceneIds.js'
-import { findChoice, successChance, type EventDef } from './EventDef.js'
+import { findChoice, successChance, type EventDef, type EventLink } from './EventDef.js'
 import type { PendingEvent } from './PendingEvent.js'
 import { applyContentEffects, type ContentEffectDeps } from '../content/applyContentEffects.js'
 import type { OpportunityIndex } from '../opportunity/Opportunity.js'
@@ -14,8 +14,8 @@ import type { PositionDeps } from '../position/PositionSystem.js'
 import { MOMENT_EVENT_RESOLVE, pushMoment } from '../trait/moments.js'
 
 // §7.2. Two ways an event reaches the player: drawn at random (weighted), or
-// queued by id through `event.trigger` — which is how position trials (§7.1)
-// arrive on the exact same pipeline as everything else.
+// queued — by an outcome's `next`, or by a system, which is how position
+// trials (§7.1) arrive on the exact same pipeline as everything else.
 
 export const EVENT_SYSTEM_ID = 'event'
 export const EVENT_SYSTEM_ORDER = 90
@@ -68,16 +68,29 @@ const EVENT_FACADE_FIELDS: readonly FacadeField[] = [
   { path: `counter.${counterForEventChoice('bold')}`, label: 'Times the bold option was taken', type: 'number' },
 ]
 
+export interface EnqueueOptions {
+  /** Turns to wait. Defaults to 0 — drained on the very next pass. */
+  turnsLeft?: number
+  /** Defaults to false: a same-year continuation does not re-check `require`. */
+  checkRequire?: boolean
+  orElse?: string
+}
+
 /**
- * Puts an event id in the inbox EventSystem drains each turn.
+ * Puts an event in the inbox EventSystem drains each turn.
  *
- * Exported because there are two callers and they must not diverge: content's
- * `event.trigger` effect (§6.3) and PositionSystem's yearly trial (§7.1 —
- * "trials 走一般事件管線"). Emitting the effect is how the *performance* hears
+ * Exported because there are two callers and they must not diverge: an
+ * outcome's `next` (§7.2) and PositionSystem's yearly trial (§7.1 — "trials
+ * 走一般事件管線"). Emitting `event.trigger` is how the *performance* hears
  * about it; this is how the *game* does.
  */
-export function enqueueEvent(state: GameState, eventId: string): void {
-  state.events.queue.push(eventId)
+export function enqueueEvent(state: GameState, eventId: string, options: EnqueueOptions = {}): void {
+  state.events.queue.push({
+    eventId,
+    turnsLeft: Math.max(0, options.turnsLeft ?? 0),
+    checkRequire: options.checkRequire ?? false,
+    ...(options.orElse === undefined ? {} : { orElse: options.orElse }),
+  })
 }
 
 export function createEventSystem(options: EventSystemOptions): GameSystem {
@@ -86,7 +99,23 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
   const effectDeps: ContentEffectDeps = {
     opportunities: options.opportunities,
     position: options.position,
-    enqueueEvent: (ctx, eventId) => enqueueEvent(ctx.state, eventId),
+  }
+
+  const spent = (ctx: SystemCtx, event: EventDef): boolean =>
+    event.once === true && ctx.state.events.fired.includes(event.id)
+
+  /**
+   * §7.2's story-graph edge. `afterYears` decides both *when* it lands and
+   * whether `require` gets a say when it does — see {@link EventLink}.
+   */
+  const enqueueLink = (ctx: SystemCtx, link: EventLink): void => {
+    const afterYears = link.afterYears ?? 0
+    enqueueEvent(ctx.state, link.id, {
+      turnsLeft: afterYears * options.position.turnsPerYear,
+      checkRequire: afterYears >= 1,
+      ...(link.orElse === undefined ? {} : { orElse: link.orElse }),
+    })
+    ctx.emit({ type: 'event.trigger', eventId: link.id })
   }
 
   /**
@@ -95,6 +124,11 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
    * in `resolve()`. Without this the player decides while looking at nothing.
    */
   const present = (ctx: SystemCtx, event: EventDef): void => {
+    // Spend `once` on presentation, not on resolution: an event the player
+    // was shown has happened to them, whichever way the roll then went.
+    if (event.once === true && !ctx.state.events.fired.includes(event.id)) {
+      ctx.state.events.fired.push(event.id)
+    }
     ctx.state.events.pending.push(toPending(event))
 
     if (event.scene.bg) ctx.emit({ type: 'scene.bg', id: event.scene.bg })
@@ -128,6 +162,7 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
     if (event.scene.fx) ctx.emit({ type: 'scene.fx', id: event.scene.fx })
 
     applyContentEffects(ctx, outcome.effects, effectDeps, choice.mag)
+    if (outcome.next) enqueueLink(ctx, outcome.next)
 
     for (const [key, value] of [
       [COUNTER_EVENTS_RESOLVED, 1],
@@ -143,13 +178,37 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
 
   const drainQueue = (ctx: SystemCtx): void => {
     const queued = ctx.state.events.queue
+    const held: QueuedEvent[] = []
     ctx.state.events.queue = []
-    for (const id of queued) {
-      const event = byId.get(id)
-      // An unknown id is a content problem, not a crash: the trigger is
-      // simply dropped (§6.2 keeps hard failures at load time).
-      if (event) present(ctx, event)
+
+    for (const entry of queued) {
+      // Scheduled for a later turn — leave it in the inbox untouched.
+      if (entry.turnsLeft > 0) {
+        held.push(entry)
+        continue
+      }
+
+      const event = byId.get(entry.eventId)
+      // An unknown id is a content problem, not a crash: the link is simply
+      // dropped (§6.2 keeps hard failures at load time, and merge.ts refuses
+      // a pack whose `next` points nowhere).
+      const blocked =
+        event === undefined ||
+        spent(ctx, event) ||
+        (entry.checkRequire && !isSatisfied(event.require, { state: ctx.state, rng: ctx.rng }))
+
+      if (event !== undefined && !blocked) {
+        present(ctx, event)
+        continue
+      }
+
+      // The author's designated safety net. It is played as written — running
+      // its `require` too would just move the same problem one step along.
+      const fallback = entry.orElse === undefined ? undefined : byId.get(entry.orElse)
+      if (fallback && !spent(ctx, fallback)) present(ctx, fallback)
     }
+
+    ctx.state.events.queue = [...held, ...ctx.state.events.queue]
   }
 
   return {
@@ -158,6 +217,13 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
 
     onPhase(phase: Phase, ctx: SystemCtx): void {
       if (phase === 'turn.start') {
+        // One tick of the schedule, before anything else this turn can look at
+        // it — so a link written as "three years later" lands on the third
+        // turn the player actually plays, not the fourth.
+        for (const entry of ctx.state.events.queue) {
+          if (entry.turnsLeft > 0) entry.turnsLeft -= 1
+        }
+
         // Whatever the player didn't answer resolves as the neutral option,
         // so a skipped decision is still a defined one.
         for (const pending of [...ctx.state.events.pending]) {
@@ -176,6 +242,7 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
           event.weight > 0 &&
           // 去年抽過的今年不抽：情境現在是看得見的，連續兩年同一句會像壞掉
           event.id !== ctx.state.events.lastDrawn &&
+          !spent(ctx, event) &&
           isSatisfied(event.require, { state: ctx.state, rng: ctx.rng }),
       )
       const drawn = weightedPick(eligible, ctx.rng)
@@ -196,8 +263,8 @@ export function createEventSystem(options: EventSystemOptions): GameSystem {
         if (pending) resolve(ctx, pending, command.choice)
       }
 
-      // Trials queued by PositionSystem during this same command, plus any
-      // event.trigger chained by the outcome just applied.
+      // Trials queued by PositionSystem during this same command, plus the
+      // `next` chained by the outcome just applied.
       drainQueue(ctx)
     },
 

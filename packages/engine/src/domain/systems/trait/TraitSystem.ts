@@ -8,6 +8,7 @@ import type { OpportunityIndex } from '../opportunity/Opportunity.js'
 import type { PositionDeps } from '../position/PositionSystem.js'
 import type { TraitDef } from './TraitDef.js'
 import { drainMoments, MOMENT_TURN_END, pushMoment } from './moments.js'
+import { enqueueEvent } from '../event/EventSystem.js'
 
 // §7.5: "the system saw how you played". Traits are thresholds over
 // behaviour counters, checked at the moments the *data* names — this file
@@ -32,9 +33,6 @@ export function createTraitSystem(options: TraitSystemOptions): GameSystem {
   const effectDeps: ContentEffectDeps = {
     opportunities: options.opportunities,
     position: options.position,
-    enqueueEvent: (ctx, eventId) => {
-      ctx.state.events.queue.push(eventId)
-    },
   }
 
   const unlock = (ctx: SystemCtx, trait: TraitDef): void => {
@@ -52,6 +50,18 @@ export function createTraitSystem(options: TraitSystemOptions): GameSystem {
     }
 
     applyContentEffects(ctx, trait.grants, effectDeps)
+
+    // Same story-graph edge events use (§7.2), so "what plays next" has one
+    // definition no matter which system decided there is a next.
+    if (trait.next) {
+      const afterYears = trait.next.afterYears ?? 0
+      enqueueEvent(state, trait.next.id, {
+        turnsLeft: afterYears * options.position.turnsPerYear,
+        checkRequire: afterYears >= 1,
+        ...(trait.next.orElse === undefined ? {} : { orElse: trait.next.orElse }),
+      })
+      ctx.emit({ type: 'event.trigger', eventId: trait.next.id })
+    }
 
     if (trait.scene.fx) ctx.emit({ type: 'scene.fx', id: trait.scene.fx })
     if (trait.scene.sfx) ctx.emit({ type: 'scene.sfx', id: trait.scene.sfx, priority: 'high' })

@@ -78,7 +78,7 @@
 
 | 項目 | 決定 |
 |---|---|
-| 核心迴圈 | 季初擲骰配點到能力；投資透過事件卡與機會提案處理 |
+| 核心迴圈 | 每回合（短局＝一年）擲骰配點到能力；投資透過事件卡與機會提案處理 |
 | 標的選擇 | **玩家不選標的**，系統主動提案 |
 | 入場決策 | **四檔倉位** `light` / `normal` / `heavy` / `leveraged`，非 yes/no |
 | 價格 | 無真實價格序列，只有相對倍數與時間窗 |
@@ -290,10 +290,12 @@ React 19 + React Compiler 已啟用，render 會重複執行。若隨機出現�
 
 ### 5.4 Golden test
 
-`tests/golden/` 存放 `(seed, contentFingerprint, commandLog) → 最終狀態摘要` 的快照。
-任何改動只要動到隨機序列，golden test 就會紅。這是唯一能長期守住決定論的方法。
+`packages/engine/src/sim/__tests__/headless.test.ts` 的快照存的就是
+`(seed, contentFingerprint, commandLog) → 最終狀態摘要`。任何改動只要動到隨機序列，
+它就會紅。這是唯一能長期守住決定論的方法。
 
-建議加入 `vitest` 作為 devDependency。目前 `package.json` 沒有測試框架。
+`replayLife()` 是同一件事的另一半：同一個 seed ＋同一份指紋 ＋同一串 commandLog，
+必須重播出同一個 summary（§5.1）。兩者都在 `headless.test.ts` 裡。
 
 ---
 
@@ -392,15 +394,19 @@ domain 一行都不用改。
   "engineApi": "^1",
   "facadeVersion": 1,
   "provides": {
-    "events": 120, "opportunities": 24,
-    "careers": 18, "traits": 30,
-    "worldGenerators": ["tw-history", "random"]
+    "events": 92, "opportunities": 24,
+    "careers": 29, "traits": 37,
+    "worldGenerators": []
   },
   "requires": [],
   "assets": { "actors": {}, "bg": {}, "sfx": {} }
 }
 ```
 
+- `provides` **不是手寫的**，從實際的陣列長度算出來（`manifest.ts`），內容長大時它自己
+  跟著長——手寫的數字與包裡真的有的東西一定會對不上
+- `provides.worldGenerators` 指的是**這個包自己註冊的**產生器。`tw-history` 與 `random`
+  是引擎內建的（§7.4），所以 core-tw 這一欄是空的
 - `engineApi` / `facadeVersion` 不相容就**拒絕載入並說明原因**
 - **官方內容包走跟 mod 完全一樣的載入器**（dogfooding）。
   這樣結構上就不可能出現「官方做得到但 mod 做不到」的事。
@@ -694,10 +700,16 @@ interface GameSystem {
   id: string
   order: number                        // turn 內的結算順序
   onPhase?(phase: Phase, ctx: SystemCtx): void
+  onCommand?(command: Command, ctx: SystemCtx): void  // §4.1：各系統自己認領 command
   facadeFields?(): FacadeField[]       // 貢獻給 mod 的白名單欄位
 }
-// ctx 提供 state、rng.stream(this.id)、emit(effect)
+// ctx = { state, rng, emit }
+// rng 是 advance() 依 (systemId, commandIndex, hook) 派生好的 RngStream（§5.2）——
+// 系統不自己開流，否則同一顆種子的重播就不再是同一條隨機序列
 ```
+
+`onCommand` 是 §4.1「沒有中央 dispatcher」的落地方式：`advance()` 把每個 command
+原封不動廣播給所有系統，誰在意誰處理，沒有一個知道全部指令的大 switch。
 
 日後要加期權、房地產、加密貨幣、稅制、貸款 = **新增一個 system + 一個內容包，引擎不動**。
 這是「新機制可擴充」的具體交付方式。
@@ -733,7 +745,7 @@ interface GameSystem {
 | Class 合併 | `clsx` + `tailwind-merge`（`cn()`，見 §10.3） | — |
 | 動畫 | **自建 director + Web Animations API**，零依賴 | — |
 | Schema | **zod**（授權真相）→ `toJSONSchema()` 匯出 | 4.4.3 |
-| 測試 | **vitest**，兩個 project（node / browser） | 4.1 |
+| 測試 | **vitest**，每個 package 一份 config（engine／tokens 走 node，web 走 jsdom） | 4.1 |
 | Router | **無** —— 畫面是狀態機，種子分享用 `URLSearchParams` | — |
 | 狀態管理 | **無** —— sim 持有，UI 用 `useSyncExternalStore` | — |
 | immer | **無** —— 改用 clone-then-mutate（見 §4.3），不需要 immutability | — |

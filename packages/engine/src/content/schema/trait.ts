@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { exprSchema } from './expr.js'
 import { stateEffectSchema, sceneRefSchema } from './effect.js'
+import { eventLinkSchema } from './event.js'
 import { TRAIT_MOMENTS, type TraitDef } from '../../domain/systems/trait/TraitDef.js'
 
 // §7.5: traits are behavior counters + a threshold, not random drops.
@@ -17,6 +18,7 @@ export const traitSchema: z.ZodType<TraitDef> = z.object({
   require: exprSchema,
   exclude: z.array(z.string()).default([]),
   grants: z.array(stateEffectSchema),
+  next: eventLinkSchema.optional(),
   text: z.string().min(1),
   scene: sceneRefSchema,
   checkOn: checkOnSchema,

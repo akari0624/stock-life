@@ -16,7 +16,6 @@ export const stateEffectSchema = z.discriminatedUnion('type', [
     opportunityId: z.string().min(1),
     sizing: sizingSchema,
   }),
-  z.strictObject({ type: z.literal('event.trigger'), eventId: z.string().min(1) }),
 ])
 
 export const sceneHintSchema = z.discriminatedUnion('type', [
@@ -40,6 +39,10 @@ export const sceneHintSchema = z.discriminatedUnion('type', [
     fadeMs: z.number().nonnegative().optional(),
   }),
   z.strictObject({ type: z.literal('scene.fx'), id: z.string().min(1) }),
+  // Emitted by the engine, never authored: content sequences events with an
+  // outcome's `next` (§7.2). Listed here so the director's input can be
+  // validated, not so a pack can write one.
+  z.strictObject({ type: z.literal('event.trigger'), eventId: z.string().min(1) }),
 ])
 
 /**

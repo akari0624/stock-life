@@ -13,8 +13,6 @@ import type { Sizing } from '../../expr/effects.js'
 export interface ContentEffectDeps {
   opportunities: OpportunityIndex
   position: PositionDeps
-  /** Queue an event id for the pipeline — how `event.trigger` reaches EventSystem. */
-  enqueueEvent(ctx: SystemCtx, eventId: string): void
 }
 
 /**
@@ -56,11 +54,6 @@ export function applyContentEffects(
         // this is the second caller that S9 left room for.
         const opportunity = deps.opportunities.get(effect.opportunityId)
         if (opportunity) openPosition(ctx, deps.position, opportunity, effect.sizing as Sizing)
-        break
-      }
-      case 'event.trigger': {
-        deps.enqueueEvent(ctx, effect.eventId)
-        ctx.emit({ type: 'event.trigger', eventId: effect.eventId })
         break
       }
     }

@@ -59,9 +59,36 @@ export interface TraitsState {
   removed: string[]
 }
 
+/**
+ * One scheduled link waiting to become a decision (§7.2). Carries its own
+ * firing rules so `drainQueue` stays dumb: it never has to look back at which
+ * outcome put the entry here.
+ */
+export interface QueuedEvent {
+  eventId: string
+  /**
+   * Turns still to wait, counted down once per turn. Relative rather than an
+   * absolute year on purpose: `mid` runs *before* the calendar rolls over
+   * (advance.ts) while a command dispatched between turns runs after it, so
+   * the two contexts disagree about what "this year" is by one. A countdown
+   * has no such ambiguity, and it stays correct under quarter granularity.
+   */
+  turnsLeft: number
+  /**
+   * Whether the target's `require` still has to hold when it comes due. False
+   * for a same-year continuation (nothing has changed since the author wrote
+   * the beat), true for anything scheduled years out.
+   */
+  checkRequire: boolean
+  /** Played instead if it cannot fire (require failed, or `once` already spent). */
+  orElse?: string
+}
+
 export interface EventsState {
-  /** Event ids waiting to be turned into a decision (from `event.trigger`). */
-  queue: string[]
+  /** Links waiting to be turned into a decision (an outcome's `next`, or a trial). */
+  queue: QueuedEvent[]
+  /** Ids of `once` events already played, so they are never played again (§7.2). */
+  fired: string[]
   /** Decisions currently in front of the player, oldest first. */
   pending: PendingEvent[]
   /**
@@ -134,7 +161,10 @@ export function cloneGameState(state: GameState): GameState {
     flags: { ...state.flags },
     offers: state.offers.map(cloneOffer),
     events: {
-      queue: [...state.events.queue],
+      // Objects, not strings — a spread would share references and quietly
+      // break this function's promise never to mutate the input.
+      queue: state.events.queue.map((q) => ({ ...q })),
+      fired: [...state.events.fired],
       pending: state.events.pending.map((e) => ({
         ...e,
         choices: e.choices.map((c) => ({ ...c })),

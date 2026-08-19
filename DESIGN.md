@@ -363,7 +363,6 @@ type StateEffect =
   | { type: 'flag.set';      key: string }
   | { type: 'trait.grant';   id: string }
   | { type: 'position.open'; opportunityId: string; sizing: Sizing }
-  | { type: 'event.trigger'; eventId: string }
 
 // 對演出的提示（純粹給 director，不影響任何狀態）
 type SceneHint =
@@ -373,7 +372,11 @@ type SceneHint =
   | { type: 'scene.sfx';   id: string; priority?: 'high'|'normal'; dedupeMs?: number } // §10.7
   | { type: 'scene.bgm';   id: string; fadeMs?: number }                              // §10.7
   | { type: 'scene.fx';    id: string }   // 崩盤紅光、開香檳…
+  | { type: 'event.trigger'; eventId: string }  // 「有事件被排進佇列了」，§7.2
 ```
+
+`event.trigger` 在 SceneHint 這一側是刻意的：它是**佇列已經寫完之後**才發出的通知，
+本身不改任何狀態。內容不能寫它——接續故事一律走 outcome 的 `next`（§7.2）。
 
 **mod 作者填的是 SceneHint 的 id。素材不存在時 `AssetResolver` 回傳 fallback**
 （角色 → 名字色塊；背景 → 漸層；SFX → 靜音；FX → CSS 動畫）。
@@ -453,29 +456,74 @@ domain 一行都不用改。
   "id": "overtime_crunch",
   "require": { "==": ["career.industry", "tech"] },
   "weight": 10,
+  "once": false,
   "prompt": "晚上九點，主管還在。他剛剛經過你桌邊兩次，但什麼都沒說。",
   "choices": [
-    { "id": "safe",   "label": "準時下班",  "odds": "+20", "mag": 1 },
-    { "id": "normal", "label": "配合加班",  "odds": "0",   "mag": 2 },
-    { "id": "bold",   "label": "拼命表現",  "odds": "-15", "mag": 3 }
+    { "id": "safe",   "label": "準時下班", "odds": "+20", "mag": 1,
+      "good": "你關機走人。隔天交出的東西一樣漂亮，主管記住了這件事。",
+      "bad":  "你走了，卻在捷運上一直想他經過時的表情。那晚沒睡好。" },
+    { "id": "normal", "label": "配合加班", "odds": "0",   "mag": 2, "good": "…", "bad": "…" },
+    { "id": "bold",   "label": "拼命表現", "odds": "-15", "mag": 3, "good": "…", "bad": "…" }
   ],
-  "good": { "text": "…", "effects": [ { "type": "stat.add", "key": "income", "value": 2 } ] },
-  "bad":  { "text": "…", "effects": [ { "type": "stat.add", "key": "time",   "value": -2 } ] },
+  "good": {
+    "effects": [ { "type": "stat.add", "key": "income", "value": 2 } ],
+    "next": { "id": "promotion_talk", "afterYears": 1 }
+  },
+  "bad": {
+    "effects": [ { "type": "stat.add", "key": "nerve", "value": -4 } ]
+  },
   "scene": { "bg": "office", "sfx": "keyboard" }
 }
 ```
+
+**文案 per-choice，效果 per-outcome。** 成功/失敗各一句話寫在**選項**上，跟玩家真的做了
+什麼對得起來——「推掉」與「揪一整桌」不該共用同一句。效果則是 good/bad 各一組、三個選項
+共享（由各自的 `mag` 縮放），因為那是「這件事往好還往壞走」的結果，不是動作本身。
 
 **一個事件演兩次，中間夾著玩家的選擇：**
 
 | 時機 | 發出什麼 | 玩家看到 |
 |---|---|---|
-| **提出**（抽到／被 `event.trigger` 叫到） | `scene.bg`、`scene.actor`、`scene.say(prompt)` | 情境。**這是他做決定的唯一依據** |
-| **結算**（`resolveEvent` 之後） | `scene.say(good.text \| bad.text)`、`scene.sfx`、`scene.fx` | 結果 |
+| **提出**（抽到／被排進佇列） | `scene.bg`、`scene.actor`、`scene.say(prompt)` | 情境。**這是他做決定的唯一依據** |
+| **結算**（`resolveEvent` 之後） | `scene.say(choice.good \| choice.bad)`、`scene.sfx`、`scene.fx` | 結果 |
 
 ⚠️ `prompt` 不是可有可無的裝飾：沒有它，玩家看到的就只有三個動詞加三個百分比，
 不知道自己在決定什麼。**結局文字取代不了它**——結局是選完之後才看得到的東西。
 
 `prompt` 在 schema 上是**必填**：內容包載得進來，就一定有情境可讀。
+
+#### 故事圖：`next`
+
+`next` 掛在 **outcome** 上而不是 event 上，所以成功與失敗可以通往不同的地方——
+三個選項共用一組 outcome，這是一個事件僅有的分岔。
+
+| 寫法 | 意思 |
+|---|---|
+| `next: { id }` | 同一年立刻接上，**不檢查目標的 `require`**：鏡頭還沒切走，世界沒變 |
+| `next: { id, afterYears: 3 }` | 排到三年後，**到期時要檢查 `require`**：三年夠玩家離婚、破產、換產業了 |
+| `next: { id, afterYears: 3, orElse }` | 到期時演不成（require 不成立、或目標的 `once` 已經用掉）就改演 `orElse` |
+
+被 `next` 指到的段落寫 `weight: 0`，它就永遠不進隨機池，只走箭頭。`orElse` 是作者
+指定的退路，照寫的演——再驗一次它的 `require` 只是把同一個問題往後推一格。
+
+`afterYears` 是**相對回合倒數**，不是絕對年份：`mid` 階段跑在日曆換年之前、回合之間
+的 command 跑在之後，兩邊對「今年」的認知差一格，倒數沒有這個歧義，季 granularity 下
+也照樣正確。
+
+**指向不存在的事件是載入期錯誤**（`validateMergedContent`），不是執行期靜靜丟掉——
+`next` 是圖上的一條邊，編輯器要畫它，載入器就要能證明它指得到人。
+
+`once: true` = 一輩子只演一次，不分成功失敗，在**提出**的當下就算用掉。
+「重試到成功為止」不是這個欄位——那是 `require` + 只在 good 設的 flag
+（`meet_someone` 就該每年再來一次，直到你真的交往）。
+
+⚠️ **鏈接是精確的，入場是機率的。** 箭頭之後的每一格保證會演；第一格仍然要跟其他
+八十幾個事件搶那一年唯一的抽籤位。實測：四段故事、第一段 weight 8，29% 的人生從頭到尾
+沒遇到第一段，但**只要遇到了，96% 會把四段講完**，段與段固定隔一年。
+
+`event.trigger` **不是內容可以寫的效果**。它只出不進：引擎把事件排進佇列之後，發一個
+`{ type: "event.trigger" }` 給演出層，讓 director 知道有事情被觸發了。內容要接續故事
+一律用 `next`——同一件事只有一種寫法。
 
 ### 7.3 Career —— 一張有向圖
 
@@ -531,6 +579,7 @@ interface WorldGenerator {
   ]},
   "exclude": ["paper_hands"],
   "grants": [ { "type": "stat.add", "key": "nerve", "value": 10 } ],
+  "next": { "id": "the_year_you_stopped_looking" },
   "text": "帳面腰斬三次，你一股都沒賣。市場的噪音再也動不了你——**持倉考驗的失敗率大幅降低**。",
   "scene": { "fx": "trait_unlock", "sfx": "chime" }
 }
@@ -543,6 +592,8 @@ interface WorldGenerator {
   所以 **mod 作者能用官方計數器寫出自己的特性**
 - **門檻檢查的時機是資料驅動的**：`checkOn: ['turn.end', 'position.close', 'event.resolve']`，
   不硬編碼在流程裡（yakyulife 是硬編碼在 `checkTraitsMid()` 裡）
+- **`next` 跟事件是同一個形狀**（§7.2）：解鎖的那一年可以接一段戲，而不只是跳個提示。
+  「什麼接在什麼後面」永遠只有一種寫法，不管是哪個 system 決定有下一格
 - **互斥與移除**：`exclude` 讓對立人格不會同時成立；被覆蓋的特性進 `removed[]`，
   結算畫面畫刪除線（yakyulife 這個小設計很有效，照抄）
 - 負面特性也走同一套（`tone: 'bad'`），不需要另一條路徑

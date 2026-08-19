@@ -76,7 +76,7 @@ export function createInitialGameState(options: CreateGameStateOptions): GameSta
     counters: {},
     flags: {},
     offers: [],
-    events: { queue: [], pending: [] },
+    events: { queue: [], pending: [], fired: [] },
     moments: [],
   }
 }

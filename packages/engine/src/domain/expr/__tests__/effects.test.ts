@@ -30,19 +30,21 @@ describe('StateEffect / SceneHint separation', () => {
       { type: 'flag.set', key: 'diamond_hands' },
       { type: 'trait.grant', id: 'diamond_hands' },
       { type: 'position.open', opportunityId: 'op-1', sizing: 'normal' },
-      { type: 'event.trigger', eventId: 'ev-1' },
       { type: 'scene.bg', id: 'bg-1' },
       { type: 'scene.actor', id: 'actor-1' },
       { type: 'scene.say', actor: 'actor-1', text: 'hi' },
       { type: 'scene.sfx', id: 'sfx-1' },
       { type: 'scene.bgm', id: 'bgm-1' },
       { type: 'scene.fx', id: 'fx-1' },
+      // Emitted after the queue has already been written, so it changes no
+      // state of its own — that is why it lives on the hint side (§7.2).
+      { type: 'event.trigger', eventId: 'ev-1' },
     ]
     for (const e of effects) {
       expect(isStateEffect(e)).not.toBe(isSceneHint(e))
     }
-    expect(effects.filter(isStateEffect)).toHaveLength(6)
-    expect(effects.filter(isSceneHint)).toHaveLength(6)
+    expect(effects.filter(isStateEffect)).toHaveLength(5)
+    expect(effects.filter(isSceneHint)).toHaveLength(7)
   })
 })
 
@@ -93,11 +95,6 @@ describe('applyStateEffect', () => {
     expect(next.positions.open).toEqual([])
   })
 
-  it('event.trigger does not throw and does not corrupt state', () => {
-    const state = buildState()
-    const next = applyStateEffect(state, { type: 'event.trigger', eventId: 'ev-1' }, rng())
-    expect(next).toEqual(state)
-  })
 })
 
 describe('SceneHint never touches state (§6.3)', () => {
@@ -110,7 +107,7 @@ describe('SceneHint never touches state (§6.3)', () => {
     const sceneHints: SceneHint[] = [
       { type: 'scene.bg', id: 'bg-1' },
       { type: 'scene.say', actor: 'a', text: 'hello' },
-      { type: 'scene.fx', id: 'fx-1' },
+      { type: 'event.trigger', eventId: 'ev-1' },
     ]
     const interleaved: Effect[] = [
       sceneHints[0]!,

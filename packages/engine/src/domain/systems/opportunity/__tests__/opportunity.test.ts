@@ -286,7 +286,10 @@ describe('positions (§1.3, §7.1)', () => {
       if (current.events.queue.length > 0 || current.events.pending.length > 0) break
     }
 
-    const queued = [...current.events.queue, ...current.events.pending.map((p) => p.eventId)]
+    const queued = [
+      ...current.events.queue.map((q) => q.eventId),
+      ...current.events.pending.map((p) => p.eventId),
+    ]
     expect(queued.length).toBeGreaterThan(0)
     expect(LIFE_OPPORTUNITY.trials).toContain(queued[0])
   })

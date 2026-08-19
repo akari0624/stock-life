@@ -6,6 +6,7 @@ import { runBalance, summariseRuns } from '../balance.js'
 import { createCoreTwSource } from '../../content/packs/core-tw/index.js'
 import { MemorySource } from '../../content/loader/MemorySource.js'
 import { computeFingerprint } from '../../content/loader/fingerprint.js'
+import { coreTwManifest } from '../../content/packs/core-tw/manifest.js'
 
 const sources = () => [createCoreTwSource()]
 
@@ -14,7 +15,7 @@ describe('createLife', () => {
     const created = await createLife({ seed: 'wire', sources: sources() })
     expect(created.ok).toBe(true)
     if (!created.ok) return
-    expect(created.life.fingerprint).toBe(computeFingerprint([{ id: 'core-tw', version: '1.0.0' }]))
+    expect(created.life.fingerprint).toBe(computeFingerprint([{ id: coreTwManifest.id, version: coreTwManifest.version }]))
     expect(created.life.totalTurns).toBe(47) // 18 → 65, one turn a year (§2)
     expect(created.life.sim.getSnapshot().state.era.phase).not.toBe('unknown')
   })

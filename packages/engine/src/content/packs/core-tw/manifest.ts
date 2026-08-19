@@ -15,7 +15,10 @@ import { coreTwAssets } from './assets.js'
 
 export const coreTwManifest = {
   id: 'core-tw',
-  version: '1.0.0',
+  // §5.1：指紋只雜湊 id@version，不雜湊內容。所以**只要抽籤池變了就要升版**——
+  // 不升的話舊存檔的指紋照樣通過，卻會用同一串 commandLog 重播出另一段人生。
+  // 1.1.0：新增 events/arcs.ts 的連續事件（§7.2 的 next / afterYears / once）。
+  version: '1.1.0',
   engineApi: `^${ENGINE_API_VERSION}`,
   facadeVersion: FACADE_VERSION,
   provides: {

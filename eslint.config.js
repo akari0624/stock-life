@@ -20,9 +20,9 @@ export default defineConfig([
     },
   },
 
-  // React rules — only for apps/web
+  // React rules — 兩個前端 app（遊戲與後台編輯器）都適用
   {
-    files: ['apps/web/src/**/*.{ts,tsx}'],
+    files: ['apps/*/src/**/*.{ts,tsx}'],
     extends: [
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,

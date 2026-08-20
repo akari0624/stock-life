@@ -79,6 +79,7 @@ export {
   type Effect,
   type StateEffect,
   type SceneHint,
+  type SceneRef,
   type Sizing,
   type NamedEffectFn,
   type NamedEffectContext,
@@ -429,3 +430,10 @@ export {
   type BalanceOptions,
   type BalanceReport,
 } from './sim/balance.js'
+export {
+  probeEvents,
+  type EventProbe,
+  type ProbeReport,
+  type ProbeOptions,
+  type ProbeResult,
+} from './sim/probe.js'

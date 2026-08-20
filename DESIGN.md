@@ -415,15 +415,22 @@ domain 一行都不用改。
   掃內容算出來（`pnpm --filter engine run assets`）。兩份清單各寫一次就會對不上，
   跟 `provides` 從陣列長度算出來是同一個理由。
 
-### 6.5 事件編輯器（待建，先鎖住約束）
+### 6.5 事件編輯器（`apps/cms`，已建）
 
-給網友寫故事用的填空編輯器。**管線已經蓋好了，不要重蓋**：`PasteSource` / `FileSource`
+給網友寫故事用的填空編輯器，住在 `apps/cms`——**跟遊戲是兩個獨立的 SPA**，
+同一個 GitHub Pages 站台下的兩個路徑（遊戲 `/<repo>/`、編輯器 `/<repo>/cms/`）。
+分開的理由是依賴不互相污染：遊戲不該為了後台背上一整套表單元件庫
+（`apps/cms` 用 antd，`apps/web` 依然只多 react / react-dom）。
+
+**管線已經蓋好了，不要重蓋**：`PasteSource` / `FileSource`
 （貼上、選檔）、`PackLibrary`（安裝、啟用、匯出）、`checkTrust`（大小與數量上限）、
 `stepLimit`（惡意遞迴）、`schema:export`（zod → JSON Schema，表單直接吃這份）、以及
 §6.3 的資產 fallback——作者引用任何 bg／actor id 都會拿到由 id 雜湊決定的佔位色塊，
 所以**純文字包今天就能跑，網友不用畫圖**。
 
-缺的是作者這一端。
+編輯器只補作者那一端，而且**一行驗證邏輯都不自己寫**：即時驗證用 `eventSchema`，
+「這份包載得進遊戲嗎」直接跑 `loadContentPack()`（§6.4 的 dogfooding 延伸到後台），
+統計試跑用 `probeEvents()`。自己重寫一套判斷，遲早會跟遊戲的答案不一樣。
 
 #### 6.5.1 作者看到的是框和箭頭
 
@@ -461,17 +468,39 @@ domain 一行都不用改。
 
 #### 6.5.3 最低限度的功能，照優先度
 
-1. **試跑／預覽 —— 優先度高過表單本身。** 作者現在沒有任何辦法知道「我的事件會不會
-   出現」。要有兩個模式：**單事件預覽**（塞一個假狀態，直接把這一格演出來：prompt、
-   三個選項、成功率、兩種結果）與**統計試跑**（跑 200 局，回報出現率、平均年齡、平均
-   出現幾次）。engine 是無頭的、150 局約 1.8 秒（`scripts/balance.ts` 實測）——**沒有它，作者是閉著眼睛在寫**。
+| # | 功能 | 住在哪 |
+|---|---|---|
+| 1 | **試跑／預覽** | `EventPreview.tsx`、`TrialPanel.tsx`、`trial/worker.ts` |
+| 2 | **條件建構器** | `editor/fields.ts`、`editor/expr.ts`、`ConditionBuilder.tsx` |
+| 3 | **即時驗證** | `editor/validate.ts` |
+| 4 | **流程圖 + 斷鏈標紅** | `editor/graph.ts`、`StoryGraph.tsx` |
+| 5 | **資產選擇器** | `editor/assets.ts`、`SceneField.tsx` |
+
+1. **試跑／預覽 —— 優先度高過表單本身**，所以預覽是常駐在表單右邊的一欄，不是要切
+   過去才看得到的分頁。兩個模式：**單事件預覽**（塞一個假狀態，把這一格演出來：prompt、
+   三個選項、成功率、**兩種結果都顯示**——作者要檢查的是自己寫的兩句話，不是今天的手氣）
+   與**統計試跑**（`probeEvents()`，跑 200 局回報每一格的出現率、平均年齡、平均出現幾次）。
+   engine 是無頭的，所以試跑整段跑在 Web Worker 裡、200 局約 1.8 秒，表單不會凍住。
+   ⚠️ **試跑預設連官方包一起載入**：只載自己的包，你的事件是抽籤池裡唯一的一個，
+   出現率會漂亮得毫無意義。
 2. **條件建構器。** 沒有人會手寫 `{ all: [{ '>=': ['age', 28] }, { not: { flag: 'x' } }] }`。
    下拉選單由 §6.1 的 `FacadePath` 產生（那裡已經寫明它是欄位來源），不自由輸入。
+   ⚠️ **表達不出來的節點原樣保留成唯讀的一列**（`flag`、`chance`、嵌套的 all/any、
+   寫到計數器的 `stat.add`）。編輯器不提供某個寫法，跟編輯器可以把作者手寫的東西吃掉，
+   是兩件完全不同的事——匯入、改一句台詞、再匯出，他寫的東西必須還在。
+   `era.themes` 這類 `string[]` 欄位**刻意不出現在選單裡**：固定的運算子集合裡沒有
+   「陣列包含某個值」（`in` 是拿左值比對右邊的清單，左值是陣列時永遠 false），
+   給作者一個永遠不成立的條件比不給更糟。
 3. **即時驗證。** 用同一套 zod schema，不另寫一份——錯誤訊息本來就是中文的。
-4. **流程圖 + 斷鏈標紅。** 載入器已經會擋 `next` 指向不存在的事件（§7.2），編輯器該
-   在作者打字的當下就講，而不是等他匯出。
+   額外補兩件單看一個包時看不到的事：**同包內的重複 id**（§6.5.4 第一條，引擎補上之前
+   至少不要讓作者撞到自己）與**斷鏈**。
+4. **流程圖 + 斷鏈標紅。** 載入器已經會擋 `next` 指向不存在的事件（§7.2），編輯器在
+   作者打字的當下就講。分得出三種目標：草稿裡的、一起載入的官方包的（合法，跨包接故事）、
+   根本不存在的（紅色）。順便抓一種載入器抓不到的東西：**權重 0 又沒有任何箭頭指向它**
+   的那幾格——寫了但玩家永遠看不到。
 5. **資產選擇器。** 從 manifest 的清單選，不要讓人打字：打錯只會靜靜 fallback 成色塊，
-   作者不會發現自己打錯了。
+   作者不會發現自己打錯了。所以每個選項都掛「有圖／佔位」的標籤，讓「我打錯了」跟
+   「這張還沒畫」在畫面上長得不一樣。清單本身用 `collectRequiredAssets()` 算，不自己掃。
 
 #### 6.5.4 編輯器救不了的（引擎要先補）
 
@@ -479,8 +508,11 @@ domain 一行都不用改。
   `first_love`：抽籤池裡有兩份（機率變兩倍），但 `byId` 只認最後載入的定義——抽到 A
   的權重、演出 B 的內容，而且不報錯。**UGC 開放前必須修**。
 - **`counter.*` / `flag.*` 是共用的全域命名空間。** 開放命名空間是刻意的（§7.5：mod
-  能用官方計數器寫自己的特質），但反過來 A 包的 `counter.debt` 會被 B 包污染。編輯器
-  至少要自動加包名前綴，並在 UI 上把「官方計數器」與「你自己的」分開。
+  能用官方計數器寫自己的特質），但反過來 A 包的 `counter.debt` 會被 B 包污染。
+  第一版編輯器的處理方式是**完全不提供**（照 §6.5.1 的總則），所以它不會製造新的污染，
+  但也還沒有自動加包名前綴、還沒有把「官方計數器」與「你自己的」分開。
+  §6.5.1 表格最後兩列（「三件事都發生過才開下一段」、「走了這條就永遠看不到那條」）
+  因此還是寫不出來——它們是編輯器該藏起來的部分，而那個「藏起來的編譯步驟」還沒做。
 - **`priority`。** 有了它，劇情入口就不用灌權重去搶抽籤，而是「條件成立就一定演」，
   §6.5.2 那 29% 也一併消失。
 - **存檔指紋懸崖。** 指紋是 `pack id + version` 的雜湊，對不上就在重播任何一個 command
@@ -747,10 +779,14 @@ interface GameSystem {
 | Schema | **zod**（授權真相）→ `toJSONSchema()` 匯出 | 4.4.3 |
 | 測試 | **vitest**，每個 package 一份 config（engine／tokens 走 node，web 走 jsdom） | 4.1 |
 | Router | **無** —— 畫面是狀態機，種子分享用 `URLSearchParams` | — |
+| 後台 UI | **antd**（只在 `apps/cms`；遊戲畫面一律不用） | 6.x |
 | 狀態管理 | **無** —— sim 持有，UI 用 `useSyncExternalStore` | — |
 | immer | **無** —— 改用 clone-then-mutate（見 §4.3），不需要 immutability | — |
 
 `packages/engine` 的 runtime dependencies 只有 `zod`。`apps/web` 只多 react / react-dom。
+`apps/cms`（§6.5 的事件編輯器）多一個 antd——**它只是後台，不是遊戲畫面**，
+所以它不進 §10.3 的 token pipeline，也不共用舞台的語意色；反過來 antd 也絕對不會
+被 `apps/web` 的 bundle 看到（兩個 app 分開建置）。
 
 ### 10.2 Monorepo 佈局
 
@@ -762,7 +798,13 @@ stock-life/
   packages/tokens/     ← DTCG token JSON + style-dictionary build。零 runtime 依賴
   apps/web/            ← dependencies: { react, react-dom, clsx, tailwind-merge,
                                          @stock-life/engine, @stock-life/tokens }
+  apps/cms/            ← §6.5 的事件編輯器。dependencies: { react, react-dom, antd,
+                                         @stock-life/engine }。沒有 tokens、沒有 tailwind
 ```
+
+`apps/cms` 是**第二個消費 engine 的前端**，而這件事本身就在驗證 §3.1：後台要跑完整的
+無頭模擬（`probeEvents()` 在 Web Worker 裡跑 200 局人生），如果 engine 當初漏進了任何
+DOM 依賴，這件事會直接做不到。
 
 **這是 §3.1 紀律的物理落實**：`packages/engine/package.json` 不列 react，
 pnpm 嚴格 node_modules 讓「從 domain import UI」成為**編譯期錯誤**，

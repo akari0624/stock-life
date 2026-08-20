@@ -66,6 +66,54 @@ describe('EditorStore', () => {
     expect(snapshot.draft.events).toHaveLength(1)
   })
 
+  it('貼上 AI 產的一批：預設是附加，撞名的改掉新來的（§6.5.6）', () => {
+    const store = fresh()
+    store.addEvent('entry')
+    store.updateEvent(0, { id: 'arc_1', prompt: '我自己寫的' })
+
+    const ok = store.importPasted(
+      '以下是您要的內容：\n```json\n{ "events": [ { "id": "arc_1", "prompt": "AI 寫的", "weight": 8, "good": { "next": { "id": "arc_2" } } }, { "id": "arc_2", "prompt": "續集" } ] }\n```',
+      'append',
+    )
+
+    expect(ok).toBe(true)
+    const { draft, validation, notice } = store.getSnapshot()
+    expect(draft.events.map((event) => event.id)).toEqual(['arc_1', 'arc_1_2', 'arc_2'])
+    // 作者原本那一格必須原封不動
+    expect(draft.events[0]!.prompt).toBe('我自己寫的')
+    // 改名之後那一串故事還是接著的
+    expect(draft.events[1]!.good.next).toEqual({ id: 'arc_2' })
+    expect(validation.brokenLinks).toEqual([])
+    expect(notice?.text).toContain('arc_1 → arc_1_2')
+  })
+
+  it('貼上壞掉的事件不擋——那是表單接下來要標紅的東西，不是拒收的理由', () => {
+    const store = fresh()
+    store.importPasted('{ "events": [ { "id": "half" } ] }', 'append')
+    const { draft, validation } = store.getSnapshot()
+    expect(draft.events).toHaveLength(1)
+    expect(validation.byEvent.get(0)?.length).toBeGreaterThan(0)
+  })
+
+  it('取代模式：只有貼進來的是一整包才動 manifest（版本進指紋，§5.1）', () => {
+    const store = fresh()
+    store.updateManifest({ id: 'mine', version: '3.1.0' })
+    store.importPasted('{ "events": [ { "id": "only_event" } ] }', 'replace')
+    expect(store.getSnapshot().draft.manifest).toMatchObject({ id: 'mine', version: '3.1.0' })
+
+    store.importPasted('{ "manifest": { "id": "from-ai", "version": "1.2.3" }, "events": [] }', 'replace')
+    expect(store.getSnapshot().draft.manifest).toMatchObject({ id: 'from-ai', version: '1.2.3' })
+  })
+
+  it('認不出來的貼上不會弄壞現有的草稿', () => {
+    const store = fresh()
+    store.addEvent('entry')
+    expect(store.importPasted('我不知道你在說什麼', 'append')).toBe(false)
+    const snapshot = store.getSnapshot()
+    expect(snapshot.notice?.kind).toBe('error')
+    expect(snapshot.draft.events).toHaveLength(1)
+  })
+
   it('草稿寫進 localStorage，重開頁面回得來', () => {
     const backing = memoryStore()
     const first = new EditorStore({ store: backing, loadBaseline: false })

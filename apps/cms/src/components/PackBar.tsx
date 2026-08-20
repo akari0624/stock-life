@@ -1,6 +1,7 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { App as AntApp, Button, Flex, Input, Popconfirm, Space, Tag, Tooltip, Typography } from 'antd'
 import { useEditor, useStore } from '../editor/hooks.ts'
+import { AiImport } from './AiImport.tsx'
 
 /**
  * 最上面那一條：這是誰的包、載得進遊戲了沒、匯入匯出。
@@ -15,6 +16,7 @@ export function PackBar() {
   const store = useStore()
   const { message } = AntApp.useApp()
   const fileInput = useRef<HTMLInputElement>(null)
+  const [aiOpen, setAiOpen] = useState(false)
 
   const errorCount = [...validation.byEvent.values()].reduce((sum, issues) => sum + issues.length, 0) + validation.pack.length
 
@@ -63,6 +65,10 @@ export function PackBar() {
       </Flex>
 
       <Space size="small">
+        {/* §6.5.6：這是第一個按鈕，因為它是作者的第一個動作——今天沒有人是從空白表單開始寫的 */}
+        <Button size="small" type="primary" ghost onClick={() => setAiOpen(true)}>
+          AI 產事件／貼上 JSON
+        </Button>
         <Button size="small" loading={verify.checking} onClick={() => void store.verify()}>
           用遊戲的載入器驗收
         </Button>
@@ -83,6 +89,7 @@ export function PackBar() {
             event.target.value = ''
           }}
         />
+        <AiImport open={aiOpen} onClose={() => setAiOpen(false)} />
       </Space>
     </Flex>
   )

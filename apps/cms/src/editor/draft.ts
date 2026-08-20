@@ -287,3 +287,31 @@ function cleanEvent(event: DraftEvent): Record<string, unknown> {
     scene,
   }
 }
+
+/**
+ * 把這一格裡指向 `from` 的每一條箭頭改指 `to`。
+ *
+ * 改 id 的時候用（`EditorStore.updateEvent`），貼上一批撞到 id 的事件時也用
+ * （`paste.ts` 的 `mergeEvents`）——都是「節點改名了，線不可以斷」這同一件事。
+ */
+export function renameLinks(event: DraftEvent, from: string, to: string): DraftEvent {
+  let touched = false
+  const branches = { good: event.good, bad: event.bad }
+
+  for (const branch of ['good', 'bad'] as const) {
+    const link = branches[branch].next
+    if (!link) continue
+    const next = { ...link }
+    if (next.id === from) {
+      next.id = to
+      touched = true
+    }
+    if (next.orElse === from) {
+      next.orElse = to
+      touched = true
+    }
+    branches[branch] = { ...branches[branch], next }
+  }
+
+  return touched ? { ...event, good: branches.good, bad: branches.bad } : event
+}

@@ -67,4 +67,35 @@ describe('掛載', () => {
     })
     container.remove()
   })
+
+  it('AI 對話框打得開，而且提示詞裡真的有 schema（§6.5.6）', async () => {
+    const store = new EditorStore({ store: memoryStore(), loadBaseline: false })
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+
+    await act(async () => {
+      root.render(<App store={store} />)
+    })
+
+    const open = [...container.querySelectorAll('button')].find((button) =>
+      (button.textContent ?? '').includes('AI 產事件'),
+    )
+    expect(open).toBeDefined()
+
+    await act(async () => {
+      open?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    // 對話框走 portal，所以要看整份 document
+    const text = document.body.textContent ?? ''
+    expect(text).toContain('只輸出 JSON')
+    expect(text).toContain('"id": "safe"')
+    expect(text).toContain('把 AI 回你的 JSON 貼回來')
+
+    await act(async () => {
+      root.unmount()
+    })
+    container.remove()
+  })
 })

@@ -5,7 +5,8 @@
 
 一局約 10–20 分鐘（18 → 65 歲，一年一回合）。零後端，純靜態站。
 
-🎮 <https://akari0624.github.io/stock-life/>
+🎮 遊戲 <https://akari0624.github.io/stock-life/>
+✏️ 事件編輯器 <https://akari0624.github.io/stock-life/cms/>
 
 ---
 
@@ -33,22 +34,29 @@
 
 ```bash
 pnpm install
-pnpm dev          # 起 apps/web，順帶 build 上游 package
+pnpm dev          # 起 apps/web 與 apps/cms，順帶 build 上游 package
 ```
 
 | 指令 | 作用 |
 |---|---|
 | `pnpm dev` | 開發伺服器（turbo 會先 build engine 與 tokens） |
-| `pnpm build` | 全部建置，產出在 `apps/web/dist` |
+| `pnpm build` | 全部建置，產出在 `apps/web/dist` 與 `apps/cms/dist` |
 | `pnpm test` | vitest，全 workspace |
 | `pnpm lint` | eslint |
-| `pnpm typecheck` | tsc --noEmit |
+| `pnpm typecheck` | tsc |
+
+兩個前端 app，同一個站台下的兩個路徑：
+
+| App | 本地 | 線上 | 是什麼 |
+|---|---|---|---|
+| `apps/web` | `pnpm --filter @stock-life/web dev` | `/stock-life/` | 遊戲 |
+| `apps/cms` | `pnpm --filter @stock-life/cms dev` | `/stock-life/cms/` | 事件編輯器（DESIGN.md §6.5） |
 
 engine 另外有兩個獨立指令：
 
 ```bash
 pnpm --filter @stock-life/engine balance       # 無頭跑分，調數值平衡用
-pnpm --filter @stock-life/engine schema:export # zod → JSON Schema，給日後的 UGC 編輯器
+pnpm --filter @stock-life/engine schema:export # zod → JSON Schema，編輯器的表單吃這份
 ```
 
 ---

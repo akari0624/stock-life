@@ -1,0 +1,77 @@
+/*
+ * 只做 antd 給不了的那幾件事：整頁高度、清單列的 hover、預覽的舞台條。
+ * 其餘一律用 antd 的元件與 token——這個後台不進 §10.3 的 token pipeline，
+ * 因為它不是遊戲畫面，不需要跟舞台共用一套語意色。
+ */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.event-row {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.event-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.event-row.is-selected {
+  background: rgba(64, 150, 255, 0.14);
+  border-color: rgba(64, 150, 255, 0.45);
+}
+
+.event-row-actions {
+  visibility: hidden;
+}
+
+.event-row:hover .event-row-actions,
+.event-row.is-selected .event-row-actions {
+  visibility: visible;
+}
+
+/* 預覽的舞台：素材大多還沒畫，所以這裡刻意只是一條色塊帶（§6.3 的 fallback） */
+.preview-stage {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(64, 150, 255, 0.12), rgba(146, 84, 222, 0.12));
+}
+
+.preview-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 表單與預覽並排；窄螢幕改成上下疊 */
+.editor-split {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.editor-split-preview {
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 1100px) {
+  .editor-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-split-preview {
+    position: static;
+  }
+}

@@ -34,18 +34,30 @@ jobs:
 
       - run: pnpm test
 
+      # 一次 turbo build 蓋掉全部（tokens → engine → web／cms 的順序由它負責）。
+      # 後台的 base 由 apps/cms/vite.config.ts 從這個變數推成 /<repo>/cms/。
+      # base 錯了的話 manifest 裡的素材路徑會全部 404
+      # （見 apps/web/src/presentation/basePath.ts 的說明）。
       - name: Build
         env:
           # 專案站台在 https://<owner>.github.io/<repo>/ 底下
           VITE_BASE: /${{ github.event.repository.name }}/
         run: pnpm build
 
+      # 一個 Pages 部署只能上傳一個目錄，所以在這裡把兩份 dist 疊成站台的樣子。
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -R apps/web/dist/. site/
+          mkdir -p site/cms
+          cp -R apps/cms/dist/. site/cms/
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/web/dist
+          path: site
 
   deploy:
     needs: build
